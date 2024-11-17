@@ -1,0 +1,1859 @@
+basePath: /
+definitions:
+  models.APIKey:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      secret:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  models.AuthenticateRequest:
+    properties:
+      id:
+        description: |-
+          ID is either a verification ID (for OTP) or API key ID
+          example: 01HNAJ6640M9JRRJFQSZZVE3HH
+        type: string
+      method:
+        description: |-
+          Method must be either "otp" or "secret"
+          example: otp
+        enum:
+        - otp
+        - secret
+        type: string
+      signature:
+        description: |-
+          Signature is a unique device identifier
+          example: device_signature_123
+        type: string
+      token:
+        description: |-
+          Token is either an OTP code or API key secret
+          example: 123456
+        type: string
+    required:
+    - id
+    - method
+    - signature
+    - token
+    type: object
+  models.AuthenticateResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  models.BurnPointsRequest:
+    properties:
+      amount:
+        description: |-
+          Amount of points to burn
+          example: 50
+        type: string
+      pointsContract:
+        description: |-
+          PointsContract is the address of the points contract
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+    required:
+    - amount
+    - pointsContract
+    type: object
+  models.BurnPointsResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the burn transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.CollectibleContractInfo:
+    properties:
+      address:
+        description: |-
+          Address of the contract
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      description:
+        description: |-
+          Description of the collection
+          example: Limited collectibles
+        type: string
+      name:
+        description: |-
+          Name of the collectible collection
+          example: Special Edition
+        type: string
+      pointsContract:
+        description: |-
+          PointsContract is the address of the points contract used for purchases
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      tokenDescriptions:
+        description: |-
+          TokenDescriptions lists descriptions for each token
+          example: ["Gold","Silver","Bronze"]
+        items:
+          type: string
+        type: array
+      tokenExpiries:
+        description: |-
+          TokenExpiries lists expiry timestamps for each token
+          example: [1735689600,1735689600,1735689600]
+        items:
+          type: integer
+        type: array
+      tokenPrices:
+        description: |-
+          TokenPrices lists prices for each token
+          example: ["100","200","300"]
+        items:
+          type: string
+        type: array
+      tokenTypes:
+        description: |-
+          TokenTypes lists all token IDs in the collection
+          example: ["1","2","3"]
+        items:
+          type: string
+        type: array
+      totalSupply:
+        description: |-
+          TotalSupply across all token types
+          example: 100
+        type: string
+    type: object
+  models.CreateAPIKeyRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  models.CreateCollectibleRequest:
+    properties:
+      description:
+        description: |-
+          Description of the collectible collection
+          example: Limited edition collectibles
+        maxLength: 500
+        minLength: 1
+        type: string
+      name:
+        description: |-
+          Name of the collectible contract
+          example: Special Edition
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - description
+    - name
+    type: object
+  models.CreateCollectibleResponse:
+    properties:
+      address:
+        description: |-
+          Address is the deployed contract address
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the creation transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.CreateMerchantRequest:
+    properties:
+      decimals:
+        description: |-
+          Decimals for the points token
+          example: 18
+        maximum: 18
+        minimum: 0
+        type: integer
+      name:
+        description: |-
+          Name of the merchant
+          example: My Store
+        maxLength: 100
+        minLength: 1
+        type: string
+      phoneNumber:
+        description: |-
+          PhoneNumber must be in E.164 format
+          example: +60123456789
+        type: string
+      publicKey:
+        description: |-
+          PublicKey is the merchant's public key
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      symbol:
+        description: |-
+          Symbol for the points token
+          example: PTS
+        type: string
+    required:
+    - decimals
+    - name
+    - phoneNumber
+    - publicKey
+    - symbol
+    type: object
+  models.CreateMerchantResponse:
+    properties:
+      merchantAddress:
+        description: |-
+          MerchantAddress is the deployed merchant contract address
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      pointsAddress:
+        description: |-
+          PointsAddress is the deployed points contract address
+          example: 0x9876543210abcdef1234567890abcdef12345678
+        type: string
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the creation transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.CreatePointsContractRequest:
+    properties:
+      decimals:
+        description: |-
+          Decimals specifies the number of decimal places
+          example: 18
+        type: string
+      description:
+        description: |-
+          Description of the points system
+          example: Premium tier loyalty points
+        maxLength: 500
+        minLength: 1
+        type: string
+      name:
+        description: |-
+          Name of the points token
+          example: Premium Points
+        maxLength: 100
+        minLength: 1
+        type: string
+      symbol:
+        description: |-
+          Symbol for the points token (3-4 characters)
+          example: PPT
+        type: string
+    required:
+    - decimals
+    - description
+    - name
+    - symbol
+    type: object
+  models.CreatePointsContractResponse:
+    properties:
+      address:
+        description: |-
+          Address is the deployed contract address
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the creation transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.CreateUserRequest:
+    properties:
+      avatar:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      phoneNumber:
+        type: string
+    type: object
+  models.ErrorResponse:
+    properties:
+      code:
+        type: string
+      details:
+        additionalProperties: true
+        type: object
+      message:
+        type: string
+    type: object
+  models.GetCollectibleBalanceResponse:
+    properties:
+      balance:
+        description: |-
+          Balance is the number of tokens owned
+          example: 100
+        type: string
+    type: object
+  models.GetCollectibleContractsResponse:
+    properties:
+      contracts:
+        description: Contracts is the list of collectible contracts
+        items:
+          $ref: '#/definitions/models.CollectibleContractInfo'
+        type: array
+    type: object
+  models.GetCollectibleDetailsResponse:
+    properties:
+      description:
+        description: |-
+          Description of the collectible collection
+          example: Special Edition Collectibles
+        type: string
+      pointsContract:
+        description: |-
+          PointsContract is the address of the points contract
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      tokenDescriptions:
+        description: |-
+          TokenDescriptions lists descriptions for each token
+          example: ["Gold","Silver","Bronze"]
+        items:
+          type: string
+        type: array
+      tokenExpiries:
+        description: |-
+          TokenExpiries lists expiry timestamps for each token
+          example: [1735689600,1735689600,1735689600]
+        items:
+          type: integer
+        type: array
+      tokenIDs:
+        description: |-
+          TokenIDs lists all token IDs in the collection
+          example: ["1","2","3"]
+        items:
+          type: string
+        type: array
+      tokenPrices:
+        description: |-
+          TokenPrices lists prices for each token
+          example: ["100","200","300"]
+        items:
+          type: string
+        type: array
+    type: object
+  models.GetCollectibleURIResponse:
+    properties:
+      uri:
+        description: |-
+          URI of the collectible metadata
+          example: https://example.com/metadata/1
+        type: string
+    type: object
+  models.GetPointsBalanceResponse:
+    properties:
+      balance:
+        description: |-
+          Balance is the number of points owned
+          example: 1000
+        type: string
+    type: object
+  models.GetPointsContractsResponse:
+    properties:
+      contracts:
+        description: Contracts is the list of points contracts
+        items:
+          $ref: '#/definitions/models.PointsContractInfo'
+        type: array
+    type: object
+  models.GetTokenDataResponse:
+    properties:
+      description:
+        description: |-
+          Description is the token's metadata description
+          example: Limited edition collectible
+        type: string
+      expiry:
+        description: |-
+          Expiry is the Unix timestamp when the token expires
+          example: 1735689600
+        type: integer
+      pointsContract:
+        description: |-
+          PointsContract is the address of the points contract used for purchases
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      price:
+        description: |-
+          Price is the cost in points to purchase the token
+          example: 100
+        type: string
+    type: object
+  models.IsCollectibleValidResponse:
+    properties:
+      isValid:
+        description: |-
+          IsValid indicates if the collectible is still valid
+          example: true
+        type: boolean
+    type: object
+  models.MessageResponse:
+    properties:
+      message:
+        example: message
+        type: string
+    type: object
+  models.MintCollectibleRequest:
+    properties:
+      amount:
+        description: |-
+          Amount is the number of tokens to mint
+          example: 1
+        type: string
+      collectibleAddress:
+        description: |-
+          CollectibleAddress is the contract address of the collectible
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      to:
+        description: |-
+          To is the recipient address
+          example: 0x9876543210abcdef1234567890abcdef12345678
+        type: string
+      tokenId:
+        description: |-
+          TokenId is the ID of the token to mint
+          example: 1
+        type: string
+    required:
+    - amount
+    - collectibleAddress
+    - to
+    - tokenId
+    type: object
+  models.MintCollectibleResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the mint transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.MintPointsRequest:
+    properties:
+      amount:
+        description: |-
+          Amount of points to mint (in smallest unit)
+          example: 100
+        type: string
+      pointsContract:
+        description: |-
+          PointsContract is the address of the points contract
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      recipient:
+        description: |-
+          Recipient is the address receiving the points
+          example: 0x9876543210abcdef1234567890abcdef12345678
+        type: string
+    required:
+    - amount
+    - pointsContract
+    - recipient
+    type: object
+  models.MintPointsResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the mint transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.PointsContractInfo:
+    properties:
+      address:
+        description: |-
+          Address of the contract
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      decimals:
+        description: |-
+          Decimals places for the token
+          example: 18
+        type: integer
+      description:
+        description: |-
+          Description of the points token
+          example: Loyalty points for Store XYZ
+        type: string
+      name:
+        description: |-
+          Name of the points token
+          example: Store Points
+        type: string
+      symbol:
+        description: |-
+          Symbol of the points token
+          example: SP
+        type: string
+      totalSupply:
+        description: |-
+          TotalSupply of the points token
+          example: 1000000
+        type: integer
+    type: object
+  models.PurchaseCollectibleRequest:
+    properties:
+      amount:
+        description: |-
+          Amount is the number of tokens to purchase
+          example: 1
+        type: string
+      tokenId:
+        description: |-
+          TokenId is the ID of the token to purchase
+          example: 1
+        type: string
+      user:
+        description: |-
+          User is the address purchasing the collectible
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+    required:
+    - amount
+    - tokenId
+    - user
+    type: object
+  models.PurchaseCollectibleResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the purchase transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.RedeemCollectibleRequest:
+    properties:
+      amount:
+        description: |-
+          Amount is the number of tokens to redeem
+          example: 1
+        type: string
+      tokenId:
+        description: |-
+          TokenId is the ID of the token to redeem
+          example: 1
+        type: string
+      user:
+        description: |-
+          User is the address redeeming the collectible
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+    required:
+    - amount
+    - tokenId
+    - user
+    type: object
+  models.RedeemCollectibleResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the redemption transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.RefreshTokenRequest:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+    type: object
+  models.RefreshTokenResponse:
+    properties:
+      creds:
+        type: string
+      token:
+        $ref: '#/definitions/models.Token'
+    type: object
+  models.RequestOTPRequest:
+    properties:
+      phoneNumber:
+        description: |-
+          PhoneNumber must be in E.164 format (e.g. +60123456789)
+          example: +60123456789
+        type: string
+    required:
+    - phoneNumber
+    type: object
+  models.RequestOTPResponse:
+    properties:
+      id:
+        example: phoneNumberVerification:01HNAJ6640M9JRRJFQSZZVE3HH
+        type: string
+      message:
+        example: message
+        type: string
+    type: object
+  models.SetTokenDataRequest:
+    properties:
+      description:
+        description: |-
+          Description is the token's metadata description
+          example: Limited edition collectible
+        maxLength: 500
+        minLength: 1
+        type: string
+      expiry:
+        description: |-
+          Expiry is the Unix timestamp when the token expires
+          example: 1735689600
+        type: integer
+      pointsContract:
+        description: |-
+          PointsContract is the address of the points contract used for purchases
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      price:
+        description: |-
+          Price is the cost in points to purchase the token
+          example: 100
+        type: string
+    required:
+    - description
+    - expiry
+    - pointsContract
+    - price
+    type: object
+  models.SetTokenDataResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the set data transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.Token:
+    properties:
+      accessToken:
+        type: string
+      accessTokenExpiry:
+        description: RefreshToken       string    `json:"refreshToken"` (use ID as
+          refresh token)
+        type: string
+      createdAt:
+        type: string
+      device:
+        type: string
+      id:
+        type: string
+      refreshTokenExpiry:
+        type: string
+      service:
+        type: string
+      user:
+        type: string
+    type: object
+  models.TransferPointsRequest:
+    properties:
+      amount:
+        description: |-
+          Amount of points to transfer
+          example: 25
+        type: string
+      from:
+        description: |-
+          From is the sender's address
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      pointsContract:
+        description: |-
+          PointsContract is the address of the points contract
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      to:
+        description: |-
+          To is the recipient's address
+          example: 0x9876543210abcdef1234567890abcdef12345678
+        type: string
+    required:
+    - amount
+    - from
+    - pointsContract
+    - to
+    type: object
+  models.TransferPointsResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the transfer transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.UpdateUserRequest:
+    properties:
+      avatar:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      phoneNumber:
+        type: string
+    type: object
+  models.User:
+    properties:
+      accountAddress:
+        description: StarkNet account address
+        type: string
+      avatar:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      nKey:
+        type: string
+      name:
+        type: string
+      natsPublicKey:
+        type: string
+      phoneNumber:
+        type: string
+      privateKey:
+        description: StarkNet private key
+        type: string
+      updatedAt:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@infinirewards.io
+    name: API Support
+    url: http://www.infinirewards.io/support
+  description: API for InfiniRewards - A Web3 Loyalty and Rewards Platform
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: InfiniRewards API
+  version: "1.0"
+paths:
+  /auth/authenticate:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user using OTP or API key
+      parameters:
+      - description: Authentication Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.AuthenticateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Authentication successful
+          schema:
+            $ref: '#/definitions/models.AuthenticateResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Authentication failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "429":
+          description: Too many attempts
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Authenticate user
+      tags:
+      - auth
+  /auth/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: Refresh an existing authentication token
+      parameters:
+      - description: Token Refresh Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token refreshed successfully
+          schema:
+            $ref: '#/definitions/models.RefreshTokenResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Invalid or expired token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Refresh token
+      tags:
+      - auth
+  /auth/request-otp:
+    post:
+      consumes:
+      - application/json
+      description: Request a one-time password for authentication
+      parameters:
+      - description: OTP Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.RequestOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP sent successfully
+          schema:
+            $ref: '#/definitions/models.RequestOTPResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "429":
+          description: Too many requests
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Request OTP
+      tags:
+      - auth
+  /collectibles/{address}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a collectible contract
+      parameters:
+      - description: Contract address
+        format: hex
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Collectible details retrieved successfully
+          schema:
+            $ref: '#/definitions/models.GetCollectibleDetailsResponse'
+        "400":
+          description: Invalid contract address
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Contract not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get collectible details
+      tags:
+      - collectibles
+  /collectibles/{address}/balance/{tokenId}:
+    get:
+      consumes:
+      - application/json
+      description: Get balance of collectible tokens for a specific token ID
+      parameters:
+      - description: Contract address
+        format: hex
+        in: path
+        maxLength: 42
+        minLength: 42
+        name: address
+        required: true
+        type: string
+      - description: Token ID
+        in: path
+        minimum: 0
+        name: tokenId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Balance retrieved successfully
+          schema:
+            $ref: '#/definitions/models.GetCollectibleBalanceResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Contract or token not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get collectible balance
+      tags:
+      - collectibles
+  /collectibles/{address}/purchase:
+    post:
+      consumes:
+      - application/json
+      description: Purchase a collectible token using points
+      parameters:
+      - description: Contract address
+        format: hex
+        in: path
+        name: address
+        required: true
+        type: string
+      - description: Purchase details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.PurchaseCollectibleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Purchase successful
+          schema:
+            $ref: '#/definitions/models.PurchaseCollectibleResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "402":
+          description: Insufficient points balance
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Collectible not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "410":
+          description: Collectible expired
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Purchase collectible
+      tags:
+      - collectibles
+  /collectibles/{address}/redeem:
+    post:
+      consumes:
+      - application/json
+      description: Redeem a collectible token
+      parameters:
+      - description: Contract address
+        format: hex
+        in: path
+        name: address
+        required: true
+        type: string
+      - description: Redemption details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.RedeemCollectibleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Redemption successful
+          schema:
+            $ref: '#/definitions/models.RedeemCollectibleResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not authorized to redeem
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Collectible not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Redeem collectible
+      tags:
+      - collectibles
+  /collectibles/{address}/token-data/{tokenId}:
+    get:
+      consumes:
+      - application/json
+      description: Get metadata for a collectible token
+      parameters:
+      - description: Contract address
+        format: hex
+        in: path
+        name: address
+        required: true
+        type: string
+      - description: Token ID
+        in: path
+        minimum: 0
+        name: tokenId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token data retrieved successfully
+          schema:
+            $ref: '#/definitions/models.GetTokenDataResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Token data not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get token data
+      tags:
+      - collectibles
+    put:
+      consumes:
+      - application/json
+      description: Set metadata for a collectible token
+      parameters:
+      - description: Contract address
+        format: hex
+        in: path
+        name: address
+        required: true
+        type: string
+      - description: Token ID
+        in: path
+        minimum: 0
+        name: tokenId
+        required: true
+        type: integer
+      - description: Token data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.SetTokenDataRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token data updated successfully
+          schema:
+            $ref: '#/definitions/models.SetTokenDataResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not authorized to set token data
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set token data
+      tags:
+      - collectibles
+  /collectibles/{address}/uri/{tokenId}:
+    get:
+      consumes:
+      - application/json
+      description: Get the URI for a specific collectible token's metadata
+      parameters:
+      - description: Contract address
+        format: hex
+        in: path
+        name: address
+        required: true
+        type: string
+      - description: Token ID
+        in: path
+        minimum: 0
+        name: tokenId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: URI retrieved successfully
+          schema:
+            $ref: '#/definitions/models.GetCollectibleURIResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Token not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get collectible URI
+      tags:
+      - collectibles
+  /collectibles/{address}/valid/{tokenId}:
+    get:
+      consumes:
+      - application/json
+      description: Check if a collectible token is valid (not expired)
+      parameters:
+      - description: Contract address
+        format: hex
+        in: path
+        name: address
+        required: true
+        type: string
+      - description: Token ID
+        in: path
+        minimum: 0
+        name: tokenId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Validity status retrieved
+          schema:
+            $ref: '#/definitions/models.IsCollectibleValidResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Token not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Check collectible validity
+      tags:
+      - collectibles
+  /collectibles/mint:
+    post:
+      consumes:
+      - application/json
+      description: Mint new collectible tokens for a specified recipient
+      parameters:
+      - description: Mint Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.MintCollectibleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Mint successful
+          schema:
+            $ref: '#/definitions/models.MintCollectibleResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Insufficient permissions to mint
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mint collectible tokens
+      tags:
+      - collectibles
+  /merchants:
+    post:
+      consumes:
+      - application/json
+      description: Create a new merchant account with initial points contract
+      parameters:
+      - description: Merchant creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateMerchantRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Merchant created successfully
+          schema:
+            $ref: '#/definitions/models.CreateMerchantResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: Merchant already exists
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Create new merchant
+      tags:
+      - merchants
+  /merchants/collectible-contracts:
+    get:
+      consumes:
+      - application/json
+      description: Get all collectible contracts associated with a merchant
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of collectible contracts
+          schema:
+            $ref: '#/definitions/models.GetCollectibleContractsResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not a merchant account
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get merchant's collectible contracts
+      tags:
+      - merchants
+  /merchants/collectibles:
+    post:
+      consumes:
+      - application/json
+      description: Create a new collectible contract for a merchant
+      parameters:
+      - description: Collectible creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCollectibleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created collectible details
+          schema:
+            $ref: '#/definitions/models.CreateCollectibleResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not authorized to create collectibles
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create collectible contract
+      tags:
+      - merchants
+  /merchants/points:
+    post:
+      consumes:
+      - application/json
+      description: Create an additional points contract for a merchant
+      parameters:
+      - description: Points contract creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreatePointsContractRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created points contract details
+          schema:
+            $ref: '#/definitions/models.CreatePointsContractResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not authorized to create points contracts
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create points contract
+      tags:
+      - merchants
+  /merchants/points-contracts:
+    get:
+      consumes:
+      - application/json
+      description: Get all points contracts associated with a merchant
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of points contracts
+          schema:
+            $ref: '#/definitions/models.GetPointsContractsResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not a merchant account
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get merchant's points contracts
+      tags:
+      - merchants
+  /points/{address}/balance:
+    get:
+      consumes:
+      - application/json
+      description: Get the points balance for a specific account
+      parameters:
+      - description: Points contract address
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Balance retrieved
+          schema:
+            $ref: '#/definitions/models.GetPointsBalanceResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get points balance
+      tags:
+      - points
+  /points/burn:
+    post:
+      consumes:
+      - application/json
+      description: Burn points tokens from a merchant's account
+      parameters:
+      - description: Burn Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.BurnPointsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Points burned successfully
+          schema:
+            $ref: '#/definitions/models.BurnPointsResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not authorized to burn points
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Burn points tokens
+      tags:
+      - points
+  /points/mint:
+    post:
+      consumes:
+      - application/json
+      description: Mint new points tokens for a specified recipient
+      parameters:
+      - description: Mint Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.MintPointsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Points minted successfully
+          schema:
+            $ref: '#/definitions/models.MintPointsResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not authorized to mint points
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mint points tokens
+      tags:
+      - points
+  /points/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Transfer points from one account to another
+      parameters:
+      - description: Transfer Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.TransferPointsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Points transferred successfully
+          schema:
+            $ref: '#/definitions/models.TransferPointsResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not authorized to transfer points
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Transfer points between accounts
+      tags:
+      - points
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with the provided information
+      parameters:
+      - description: User creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created successfully
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: User already exists
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Create new user
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            $ref: '#/definitions/models.MessageResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a user by their ID
+      parameters:
+      - description: User ID
+        example: user:01HNA...
+        format: ulid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User details retrieved successfully
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Authentication error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user details
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update an existing user's information
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated user details
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user details
+      tags:
+      - users
+  /users/{id}/api-keys:
+    get:
+      consumes:
+      - application/json
+      description: List all API keys for a user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of API keys
+          schema:
+            items:
+              $ref: '#/definitions/models.APIKey'
+            type: array
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List API keys
+      tags:
+      - api-keys
+    post:
+      consumes:
+      - application/json
+      description: Create a new API key for a user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: API key creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAPIKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created API key details
+          schema:
+            $ref: '#/definitions/models.APIKey'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create API key
+      tags:
+      - api-keys
+  /users/{id}/api-keys/{keyId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an API key
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: API Key ID
+        in: path
+        name: keyId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: API key deleted successfully
+          schema:
+            $ref: '#/definitions/models.MessageResponse'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete API key
+      tags:
+      - api-keys
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Enter your bearer token in the format **Bearer <token>**
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
+x-extension-openapi:
+  example: value on a json format
