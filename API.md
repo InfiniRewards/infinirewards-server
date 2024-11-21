@@ -387,7 +387,31 @@ Check if a collectible token is valid (not expired)
 | 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
 
 ---
-### /merchants
+### /merchant
+
+#### GET
+##### Summary
+
+Get merchant details
+
+##### Description
+
+Get details of a merchant
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | Merchant details | [models.Merchant](#modelsmerchant) |
+| 401 | Missing or invalid authentication token | [models.ErrorResponse](#modelserrorresponse) |
+| 403 | Not a merchant account | [models.ErrorResponse](#modelserrorresponse) |
+| 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| BearerAuth |  |
 
 #### POST
 ##### Summary
@@ -413,7 +437,7 @@ Create a new merchant account with initial points contract
 | 409 | Merchant already exists | [models.ErrorResponse](#modelserrorresponse) |
 | 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
 
-### /merchants/collectible-contracts
+### /merchant/collectible-contracts
 
 #### GET
 ##### Summary
@@ -439,7 +463,7 @@ Get all collectible contracts associated with a merchant
 | --------------- | ------ |
 | BearerAuth |  |
 
-### /merchants/collectibles
+### /merchant/collectibles
 
 #### POST
 ##### Summary
@@ -472,7 +496,7 @@ Create a new collectible contract for a merchant
 | --------------- | ------ |
 | BearerAuth |  |
 
-### /merchants/points
+### /merchant/points
 
 #### POST
 ##### Summary
@@ -505,7 +529,7 @@ Create an additional points contract for a merchant
 | --------------- | ------ |
 | BearerAuth |  |
 
-### /merchants/points-contracts
+### /merchant/points-contracts
 
 #### GET
 ##### Summary
@@ -664,33 +688,7 @@ Get the points balance for a specific account
 | BearerAuth |  |
 
 ---
-### /users
-
-#### POST
-##### Summary
-
-Create new user
-
-##### Description
-
-Create a new user with the provided information
-
-##### Parameters
-
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ------ |
-| request | body | User creation request | Yes | [models.CreateUserRequest](#modelscreateuserrequest) |
-
-##### Responses
-
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 201 | User created successfully | [models.User](#modelsuser) |
-| 400 | Invalid request format | [models.ErrorResponse](#modelserrorresponse) |
-| 409 | User already exists | [models.ErrorResponse](#modelserrorresponse) |
-| 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
-
-### /users/{id}
+### /user
 
 #### GET
 ##### Summary
@@ -699,20 +697,13 @@ Get user details
 
 ##### Description
 
-Get detailed information about a user by their ID
-
-##### Parameters
-
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ------ |
-| id | path | User ID | Yes | string (ulid) |
+Get authenticated user details
 
 ##### Responses
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
 | 200 | User details retrieved successfully | [models.User](#modelsuser) |
-| 400 | Invalid request format | [models.ErrorResponse](#modelserrorresponse) |
 | 401 | Authentication error | [models.ErrorResponse](#modelserrorresponse) |
 | 404 | User not found | [models.ErrorResponse](#modelserrorresponse) |
 | 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
@@ -726,24 +717,23 @@ Get detailed information about a user by their ID
 #### PUT
 ##### Summary
 
-Update user details
+Update user
 
 ##### Description
 
-Update an existing user's information
+Update authenticated user details
 
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ------ |
-| id | path | User ID | Yes | string |
-| request | body | User update request | Yes | [models.UpdateUserRequest](#modelsupdateuserrequest) |
+| request | body | User Update Request | Yes | [models.UpdateUserRequest](#modelsupdateuserrequest) |
 
 ##### Responses
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | Updated user details | [models.User](#modelsuser) |
+| 200 | User updated successfully | [models.User](#modelsuser) |
 | 400 | Invalid request format | [models.ErrorResponse](#modelserrorresponse) |
 | 401 | Unauthorized access | [models.ErrorResponse](#modelserrorresponse) |
 | 404 | User not found | [models.ErrorResponse](#modelserrorresponse) |
@@ -755,6 +745,30 @@ Update an existing user's information
 | --------------- | ------ |
 | BearerAuth |  |
 
+#### POST
+##### Summary
+
+Create user
+
+##### Description
+
+Create a new user
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| request | body | User Creation Request | Yes | [models.CreateUserRequest](#modelscreateuserrequest) |
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 201 | User created successfully | [models.User](#modelsuser) |
+| 400 | Invalid request format | [models.ErrorResponse](#modelserrorresponse) |
+| 409 | User already exists | [models.ErrorResponse](#modelserrorresponse) |
+| 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
+
 #### DELETE
 ##### Summary
 
@@ -762,13 +776,7 @@ Delete user
 
 ##### Description
 
-Delete an existing user
-
-##### Parameters
-
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ------ |
-| id | path | User ID | Yes | string |
+Delete authenticated user
 
 ##### Responses
 
@@ -786,7 +794,7 @@ Delete an existing user
 | BearerAuth |  |
 
 ---
-### /users/{id}/api-keys
+### /user/api-keys
 
 #### GET
 ##### Summary
@@ -795,13 +803,7 @@ List API keys
 
 ##### Description
 
-List all API keys for a user
-
-##### Parameters
-
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ------ |
-| id | path | User ID | Yes | string |
+List all API keys for authenticated user
 
 ##### Responses
 
@@ -824,20 +826,19 @@ Create API key
 
 ##### Description
 
-Create a new API key for a user
+Create a new API key for authenticated user
 
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ------ |
-| id | path | User ID | Yes | string |
-| request | body | API key creation request | Yes | [models.CreateAPIKeyRequest](#modelscreateapikeyrequest) |
+| request | body | API Key Creation Request | Yes | [models.CreateAPIKeyRequest](#modelscreateapikeyrequest) |
 
 ##### Responses
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 201 | Created API key details | [models.APIKey](#modelsapikey) |
+| 201 | API key created successfully | [models.APIKey](#modelsapikey) |
 | 400 | Invalid request format | [models.ErrorResponse](#modelserrorresponse) |
 | 401 | Unauthorized access | [models.ErrorResponse](#modelserrorresponse) |
 | 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
@@ -848,7 +849,7 @@ Create a new API key for a user
 | --------------- | ------ |
 | BearerAuth |  |
 
-### /users/{id}/api-keys/{keyId}
+### /user/api-keys/{keyId}
 
 #### DELETE
 ##### Summary
@@ -857,13 +858,12 @@ Delete API key
 
 ##### Description
 
-Delete an API key
+Delete an API key for authenticated user
 
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ------ |
-| id | path | User ID | Yes | string |
 | keyId | path | API Key ID | Yes | string |
 
 ##### Responses
@@ -899,6 +899,7 @@ Delete an API key
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
+| device | string | Device is a unique device identifier example: device_123 | Yes |
 | id | string | ID is either a verification ID (for OTP) or API key ID example: 01HNAJ6640M9JRRJFQSZZVE3HH | Yes |
 | method | string | Method must be either "otp" or "secret" example: otp<br>*Enum:* `"otp"`, `"secret"` | Yes |
 | signature | string | Signature is a unique device identifier example: device_signature_123 | Yes |
@@ -908,7 +909,7 @@ Delete an API key
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| token | string |  | No |
+| token | [models.Token](#modelstoken) |  | No |
 
 #### models.BurnPointsRequest
 
@@ -963,8 +964,6 @@ Delete an API key
 | ---- | ---- | ----------- | -------- |
 | decimals | integer | Decimals for the points token example: 18 | Yes |
 | name | string | Name of the merchant example: My Store | Yes |
-| phoneNumber | string | PhoneNumber must be in E.164 format example: +60123456789 | Yes |
-| publicKey | string | PublicKey is the merchant's public key example: 0x1234567890abcdef1234567890abcdef12345678 | Yes |
 | symbol | string | Symbol for the points token example: PTS | Yes |
 
 #### models.CreateMerchantResponse
@@ -998,7 +997,6 @@ Delete an API key
 | avatar | string |  | No |
 | email | string |  | No |
 | name | string |  | No |
-| phoneNumber | string |  | No |
 
 #### models.ErrorResponse
 
@@ -1063,6 +1061,18 @@ Delete an API key
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
 | isValid | boolean | IsValid indicates if the collectible is still valid example: true | No |
+
+#### models.Merchant
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| address | string |  | No |
+| createdAt | string |  | No |
+| decimals | integer |  | No |
+| id | string |  | No |
+| name | string |  | No |
+| symbol | string |  | No |
+| updatedAt | string |  | No |
 
 #### models.MessageResponse
 
@@ -1142,7 +1152,6 @@ Delete an API key
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| accessToken | string |  | No |
 | refreshToken | string |  | No |
 
 #### models.RefreshTokenResponse
@@ -1198,7 +1207,6 @@ Delete an API key
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
 | amount | string | Amount of points to transfer example: 25 | Yes |
-| from | string | From is the sender's address example: 0x1234567890abcdef1234567890abcdef12345678 | Yes |
 | pointsContract | string | PointsContract is the address of the points contract example: 0x1234567890abcdef1234567890abcdef12345678 | Yes |
 | to | string | To is the recipient's address example: 0x9876543210abcdef1234567890abcdef12345678 | Yes |
 
@@ -1215,7 +1223,6 @@ Delete an API key
 | avatar | string |  | No |
 | email | string |  | No |
 | name | string |  | No |
-| phoneNumber | string |  | No |
 
 #### models.User
 
@@ -1226,9 +1233,8 @@ Delete an API key
 | createdAt | string |  | No |
 | email | string |  | No |
 | id | string |  | No |
-| nKey | string |  | No |
 | name | string |  | No |
-| natsPublicKey | string |  | No |
 | phoneNumber | string |  | No |
 | privateKey | string | StarkNet private key | No |
+| publicKey | string | StarkNet public key | No |
 | updatedAt | string |  | No |

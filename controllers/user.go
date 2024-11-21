@@ -7,29 +7,25 @@ import (
 	"infinirewards/logs"
 	"infinirewards/middleware"
 	"infinirewards/models"
-	"infinirewards/nats"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/NethermindEth/starknet.go/account"
-	"github.com/oklog/ulid/v2"
 )
 
 // UserGetUserHandler godoc
-// @Summary Get user details
-// @Description Get detailed information about a user by their ID
-// @Tags users
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "User ID" format(ulid) example(user:01HNA...)
-// @Success 200 {object} models.User "User details retrieved successfully"
-// @Failure 400 {object} models.ErrorResponse "Invalid request format"
-// @Failure 401 {object} models.ErrorResponse "Authentication error"
-// @Failure 404 {object} models.ErrorResponse "User not found"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Success Response:
+//	@Summary		Get user details
+//	@Description	Get authenticated user details
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	models.User				"User details retrieved successfully"
+//	@Failure		401	{object}	models.ErrorResponse	"Authentication error"
+//	@Failure		404	{object}	models.ErrorResponse	"User not found"
+//	@Failure		500	{object}	models.ErrorResponse	"Internal server error"
+//	@Example		{json} Success Response:
 //
 //	{
 //	  "id": "user:01HNA...",
@@ -42,61 +38,23 @@ import (
 //	  "updatedAt": "2024-01-01T00:00:00Z"
 //	}
 //
-// @Example {json} Error Response (Invalid ID):
-//
-//	{
-//	  "message": "Invalid user ID format",
-//	  "code": "INVALID_REQUEST",
-//	  "details": {
-//	    "field": "id",
-//	    "reason": "must be a valid ULID starting with 'user:'"
-//	  }
-//	}
-//
-// @Example {json} Error Response (Not Found):
-//
-//	{
-//	  "message": "User not found",
-//	  "code": "NOT_FOUND",
-//	  "details": {
-//	    "id": "user:01HNA..."
-//	  }
-//	}
-//
-// @Example {json} Error Response (Unauthorized):
-//
-//	{
-//	  "message": "Authentication failed",
-//	  "code": "UNAUTHORIZED",
-//	  "details": {
-//	    "reason": "invalid or expired token"
-//	  }
-//	}
-//
-// @Example {json} Error Response (Server Error):
-//
-//	{
-//	  "message": "Internal server error",
-//	  "code": "INTERNAL_ERROR",
-//	  "details": {
-//	    "reason": "database connection error"
-//	  }
-//	}
-//
-// @Router /users/{id} [get]
+//	@Router			/user [get]
 func UserGetUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logs.Logger.Info("userGetUserHandler called", "method", r.Method)
 
-	// Get user ID from URL path
-	userID := strings.TrimPrefix(r.URL.Path, "/users/")
-	userID = strings.TrimSuffix(userID, "/")
+	// Get user ID from context instead of URL
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	user := &models.User{}
-	err := user.GetUser(ctx, userID)
+	err = user.GetUser(ctx, userID)
 	if err != nil {
 		logs.Logger.Error("userGetUserHandler Failed to get user", "error", err, "userId", userID)
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		http.Error(w, "Failed to get user", http.StatusUnauthorized)
 		return
 	}
 
@@ -108,17 +66,17 @@ func UserGetUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserCreateUserHandler godoc
-// @Summary Create new user
-// @Description Create a new user with the provided information
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param request body models.CreateUserRequest true "User creation request"
-// @Success 201 {object} models.User "User created successfully"
-// @Failure 400 {object} models.ErrorResponse "Invalid request format"
-// @Failure 409 {object} models.ErrorResponse "User already exists"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Request Body:
+//	@Summary		Create user
+//	@Description	Create a new user
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		models.CreateUserRequest	true	"User Creation Request"
+//	@Success		201		{object}	models.User					"User created successfully"
+//	@Failure		400		{object}	models.ErrorResponse		"Invalid request format"
+//	@Failure		409		{object}	models.ErrorResponse		"User already exists"
+//	@Failure		500		{object}	models.ErrorResponse		"Internal server error"
+//	@Example		{json} Request Body:
 //
 //	{
 //	  "phoneNumber": "+60123456789",
@@ -127,7 +85,7 @@ func UserGetUserHandler(w http.ResponseWriter, r *http.Request) {
 //	  "avatar": "https://example.com/avatar.jpg"
 //	}
 //
-// @Example {json} Success Response:
+//	@Example		{json} Success Response:
 //
 //	{
 //	  "id": "user:01HNA...",
@@ -140,7 +98,7 @@ func UserGetUserHandler(w http.ResponseWriter, r *http.Request) {
 //	  "updatedAt": "2024-01-01T00:00:00Z"
 //	}
 //
-// @Example {json} Error Response (Invalid Request):
+//	@Example		{json} Error Response (Invalid Request):
 //
 //	{
 //	  "message": "Invalid request format",
@@ -151,27 +109,7 @@ func UserGetUserHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-// @Example {json} Error Response (User Exists):
-//
-//	{
-//	  "message": "User already exists",
-//	  "code": "CONFLICT",
-//	  "details": {
-//	    "phoneNumber": "+60123456789"
-//	  }
-//	}
-//
-// @Example {json} Error Response (Server Error):
-//
-//	{
-//	  "message": "Failed to create user",
-//	  "code": "INTERNAL_ERROR",
-//	  "details": {
-//	    "reason": "blockchain transaction failed"
-//	  }
-//	}
-//
-// @Router /users [post]
+//	@Router			/user [post]
 func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logs.Logger.Info("userCreateUserHandler called", "method", r.Method)
@@ -187,32 +125,49 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user := &models.User{}
+	if err := user.GetUser(ctx, userID); err != nil {
+		http.Error(w, "error getting user", http.StatusInternalServerError)
+		return
+	}
+
+	if user.PrivateKey != "" {
+		http.Error(w, "user already created", http.StatusConflict)
+		return
+	}
+
 	// Generate a new private key using starknet-go
-	_, merchantPubKey, merchantPrivKey := account.GetRandomKeys()
-	_, addr, err := infinirewards.CreateUser(merchantPubKey.String(), createUserRequest.PhoneNumber)
+	_, publicKey, privateKey := account.GetRandomKeys()
+	_, addr, err := infinirewards.CreateUser(publicKey.String(), user.PhoneNumber)
 	if err != nil {
 		logs.Logger.Error("userCreateUserHandler Failed to generate keys", "error", err)
 		http.Error(w, "Failed to generate keys", http.StatusInternalServerError)
 		return
 	}
 
-	userPublicKey, userSeed := nats.GenerateUserKey()
-
-	user := &models.User{
-		ID:             "user:" + ulid.Make().String(),
-		PhoneNumber:    createUserRequest.PhoneNumber,
-		Email:          createUserRequest.Email,
-		Name:           createUserRequest.Name,
-		Avatar:         createUserRequest.Avatar,
-		PrivateKey:     merchantPrivKey.String(),
-		AccountAddress: addr,
-		NatsPublicKey:  userPublicKey,
-		NKey:           string(userSeed),
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+	_, err = infinirewards.FundAccount(addr)
+	if err != nil {
+		logs.Logger.Error("userCreateUserHandler Failed to fund account", "error", err)
+		http.Error(w, "Failed to fund account", http.StatusInternalServerError)
+		return
 	}
 
-	err = user.CreateUser(ctx)
+	user.Name = createUserRequest.Name
+	user.Email = createUserRequest.Email
+	user.Avatar = createUserRequest.Avatar
+
+	user.PrivateKey = privateKey.String()
+	user.PublicKey = publicKey.String()
+	user.AccountAddress = addr
+	user.UpdatedAt = time.Now()
+
+	err = user.UpdateUser(ctx)
 	if err != nil {
 		logs.Logger.Error("userCreateUserHandler Failed to create user", "error", err)
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
@@ -221,7 +176,6 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Remove sensitive information before sending the response
 	user.PrivateKey = ""
-	user.NKey = ""
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -229,20 +183,19 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserUpdateUserHandler godoc
-// @Summary Update user details
-// @Description Update an existing user's information
-// @Tags users
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "User ID"
-// @Param request body models.UpdateUserRequest true "User update request"
-// @Success 200 {object} models.User "Updated user details"
-// @Failure 400 {object} models.ErrorResponse "Invalid request format"
-// @Failure 401 {object} models.ErrorResponse "Unauthorized access"
-// @Failure 404 {object} models.ErrorResponse "User not found"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Request Body:
+//	@Summary		Update user
+//	@Description	Update authenticated user details
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		models.UpdateUserRequest	true	"User Update Request"
+//	@Success		200		{object}	models.User					"User updated successfully"
+//	@Failure		400		{object}	models.ErrorResponse		"Invalid request format"
+//	@Failure		401		{object}	models.ErrorResponse		"Unauthorized access"
+//	@Failure		404		{object}	models.ErrorResponse		"User not found"
+//	@Failure		500		{object}	models.ErrorResponse		"Internal server error"
+//	@Example		{json} Request Body:
 //
 //	{
 //	  "email": "updated@example.com",
@@ -250,7 +203,7 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 //	  "avatar": "https://example.com/new-avatar.jpg"
 //	}
 //
-// @Example {json} Success Response:
+//	@Example		{json} Success Response:
 //
 //	{
 //	  "id": "user:01HNA...",
@@ -263,14 +216,17 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 //	  "updatedAt": "2024-01-01T00:00:00Z"
 //	}
 //
-// @Router /users/{id} [put]
+//	@Router			/user [put]
 func UserUpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logs.Logger.Info("userUpdateUserHandler called", "method", r.Method)
 
-	// Get user ID from URL path
-	userID := strings.TrimPrefix(r.URL.Path, "/users/")
-	userID = strings.TrimSuffix(userID, "/")
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	var updateUserRequest models.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&updateUserRequest); err != nil {
@@ -280,13 +236,6 @@ func UserUpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := updateUserRequest.Validate(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Verify user has permission to update this user
-	authUserID, err := middleware.GetUserIDFromContext(ctx)
-	if err != nil || authUserID != userID {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -307,47 +256,39 @@ func UserUpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Remove sensitive information before sending response
+	user.PrivateKey = ""
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
 
 // UserDeleteUserHandler godoc
-// @Summary Delete user
-// @Description Delete an existing user
-// @Tags users
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "User ID"
-// @Success 200 {object} models.MessageResponse "User deleted successfully"
-// @Failure 401 {object} models.ErrorResponse "Unauthorized access"
-// @Failure 404 {object} models.ErrorResponse "User not found"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Success Response:
-//
-//	{
-//	  "message": "User deleted successfully"
-//	}
-//
-// @Router /users/{id} [delete]
+//	@Summary		Delete user
+//	@Description	Delete authenticated user
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	models.MessageResponse	"User deleted successfully"
+//	@Failure		401	{object}	models.ErrorResponse	"Unauthorized access"
+//	@Failure		404	{object}	models.ErrorResponse	"User not found"
+//	@Failure		500	{object}	models.ErrorResponse	"Internal server error"
+//	@Router			/user [delete]
 func UserDeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logs.Logger.Info("userDeleteUserHandler called", "method", r.Method)
 
-	// Get user ID from URL path
-	userID := strings.TrimPrefix(r.URL.Path, "/users/")
-	userID = strings.TrimSuffix(userID, "/")
-
-	// Verify user has permission to delete this user
-	authUserID, err := middleware.GetUserIDFromContext(ctx)
-	if err != nil || authUserID != userID {
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		http.Error(w, "Failed to get user", http.StatusUnauthorized)
 		return
 	}
 
@@ -357,29 +298,30 @@ func UserDeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(models.MessageResponse{
+		Message: "User deleted successfully",
+	})
 }
 
 // UserCreateAPIKeyHandler godoc
-// @Summary Create API key
-// @Description Create a new API key for a user
-// @Tags api-keys
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "User ID"
-// @Param request body models.CreateAPIKeyRequest true "API key creation request"
-// @Success 201 {object} models.APIKey "Created API key details"
-// @Failure 400 {object} models.ErrorResponse "Invalid request format"
-// @Failure 401 {object} models.ErrorResponse "Unauthorized access"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Request Body:
+//	@Summary		Create API key
+//	@Description	Create a new API key for authenticated user
+//	@Tags			api-keys
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		models.CreateAPIKeyRequest	true	"API Key Creation Request"
+//	@Success		201		{object}	models.APIKey				"API key created successfully"
+//	@Failure		400		{object}	models.ErrorResponse		"Invalid request format"
+//	@Failure		401		{object}	models.ErrorResponse		"Unauthorized access"
+//	@Failure		500		{object}	models.ErrorResponse		"Internal server error"
+//	@Example		{json} Request Body:
 //
 //	{
 //	  "name": "My API Key"
 //	}
 //
-// @Example {json} Success Response:
+//	@Example		{json} Success Response:
 //
 //	{
 //	  "id": "key_01HNA...",
@@ -388,18 +330,14 @@ func UserDeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 //	  "createdAt": "2024-01-01T00:00:00Z"
 //	}
 //
-// @Router /users/{id}/api-keys [post]
+//	@Router			/user/api-keys [post]
 func UserCreateAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logs.Logger.Info("userCreateAPIKeyHandler called", "method", r.Method)
 
-	// Get user ID from URL path
-	userID := strings.TrimPrefix(r.URL.Path, "/users/")
-	userID = strings.Split(userID, "/")[0]
-
-	// Verify user has permission
-	authUserID, err := middleware.GetUserIDFromContext(ctx)
-	if err != nil || authUserID != userID {
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -427,17 +365,16 @@ func UserCreateAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserListAPIKeysHandler godoc
-// @Summary List API keys
-// @Description List all API keys for a user
-// @Tags api-keys
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "User ID"
-// @Success 200 {array} models.APIKey "List of API keys"
-// @Failure 401 {object} models.ErrorResponse "Unauthorized access"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Success Response:
+//	@Summary		List API keys
+//	@Description	List all API keys for authenticated user
+//	@Tags			api-keys
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{array}		models.APIKey			"List of API keys"
+//	@Failure		401	{object}	models.ErrorResponse	"Unauthorized access"
+//	@Failure		500	{object}	models.ErrorResponse	"Internal server error"
+//	@Example		{json} Success Response:
 //
 //	[
 //	  {
@@ -447,18 +384,14 @@ func UserCreateAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	]
 //
-// @Router /users/{id}/api-keys [get]
+//	@Router			/user/api-keys [get]
 func UserListAPIKeysHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logs.Logger.Info("userListAPIKeysHandler called", "method", r.Method)
 
-	// Get user ID from URL path
-	userID := strings.TrimPrefix(r.URL.Path, "/users/")
-	userID = strings.Split(userID, "/")[0]
-
-	// Verify user has permission
-	authUserID, err := middleware.GetUserIDFromContext(ctx)
-	if err != nil || authUserID != userID {
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -474,46 +407,61 @@ func UserListAPIKeysHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserDeleteAPIKeyHandler godoc
-// @Summary Delete API key
-// @Description Delete an API key
-// @Tags api-keys
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "User ID"
-// @Param keyId path string true "API Key ID"
-// @Success 200 {object} models.MessageResponse "API key deleted successfully"
-// @Failure 400 {object} models.ErrorResponse "Invalid request format"
-// @Failure 401 {object} models.ErrorResponse "Unauthorized access"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Success Response:
+//	@Summary		Delete API key
+//	@Description	Delete an API key for authenticated user
+//	@Tags			api-keys
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			keyId	path		string					true	"API Key ID"
+//	@Success		200		{object}	models.MessageResponse	"API key deleted successfully"
+//	@Failure		400		{object}	models.ErrorResponse	"Invalid request format"
+//	@Failure		401		{object}	models.ErrorResponse	"Unauthorized access"
+//	@Failure		500		{object}	models.ErrorResponse	"Internal server error"
+//	@Example		{json} Success Response:
 //
 //	{
 //	  "message": "API key deleted successfully"
 //	}
 //
-// @Router /users/{id}/api-keys/{keyId} [delete]
+//	@Example		{json} Error Response (Invalid Key):
+//
+//	{
+//	  "message": "Invalid API key",
+//	  "code": "VALIDATION_ERROR",
+//	  "details": {
+//	    "reason": "API key not found or does not belong to user"
+//	  }
+//	}
+//
+//	@Router			/user/api-keys/{keyId} [delete]
 func UserDeleteAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logs.Logger.Info("userDeleteAPIKeyHandler called", "method", r.Method)
 
-	// Get user ID and key ID from URL path
-	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/users/"), "/")
-	if len(parts) != 4 { // Expected: [userID, "api-keys", keyID, ""]
-		http.Error(w, "invalid URL format", http.StatusBadRequest)
-		return
-	}
-	userID := parts[0]
-	keyID := parts[2]
-
-	// Verify user has permission
-	authUserID, err := middleware.GetUserIDFromContext(ctx)
-	if err != nil || authUserID != userID {
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	if err := models.DeleteAPIKey(ctx, userID, keyID); err != nil {
+	// Extract keyId from URL path
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 2 {
+		http.Error(w, "invalid URL format", http.StatusBadRequest)
+		return
+	}
+	keyID := parts[len(parts)-1]
+
+	// Verify the API key belongs to the user
+	keyUserID := strings.Split(keyID, ".")[0]
+	if keyUserID != userID {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if err := models.DeleteAPIKey(ctx, keyID); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to delete API key: %v", err), http.StatusInternalServerError)
 		return
 	}

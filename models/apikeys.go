@@ -38,8 +38,10 @@ func CreateAPIKey(ctx context.Context, userID string, name string) (*APIKey, err
 		return nil, err
 	}
 
+	id := fmt.Sprintf("%s.%s", userID, ulid.Make().String())
+
 	apiKey := &APIKey{
-		ID:        ulid.Make().String(),
+		ID:        id,
 		UserID:    userID,
 		Name:      name,
 		Secret:    secret,
@@ -48,7 +50,7 @@ func CreateAPIKey(ctx context.Context, userID string, name string) (*APIKey, err
 	}
 
 	// Store the API key using hierarchical subject
-	subject := fmt.Sprintf("apikeys.%s.%s", userID, apiKey.ID)
+	subject := apiKey.ID
 	data, err := json.Marshal(apiKey)
 	if err != nil {
 		return nil, err
@@ -63,7 +65,7 @@ func CreateAPIKey(ctx context.Context, userID string, name string) (*APIKey, err
 
 // ListAPIKeys lists all API keys for a user
 func ListAPIKeys(ctx context.Context, userID string) ([]*APIKey, error) {
-	prefix := fmt.Sprintf("apikeys.%s.", userID)
+	prefix := fmt.Sprintf("%s.*", userID)
 	transformFunc := func(entry jetstream.KeyValueEntry, apiKey *APIKey) {
 		apiKey.Secret = "" // Remove secret before returning
 	}
@@ -77,11 +79,9 @@ func ListAPIKeys(ctx context.Context, userID string) ([]*APIKey, error) {
 }
 
 // DeleteAPIKey deletes an API key
-func DeleteAPIKey(ctx context.Context, userID string, keyID string) error {
-	subject := fmt.Sprintf("apikeys.%s.%s", userID, keyID)
-
+func DeleteAPIKey(ctx context.Context, keyID string) error {
 	// Get the key first to verify ownership
-	entry, err := nats.GetKV(ctx, KV_BUCKET, subject)
+	entry, err := nats.GetKV(ctx, KV_BUCKET, keyID)
 	if err != nil {
 		return fmt.Errorf("API key not found")
 	}
@@ -91,17 +91,12 @@ func DeleteAPIKey(ctx context.Context, userID string, keyID string) error {
 		return err
 	}
 
-	if apiKey.UserID != userID {
-		return fmt.Errorf("unauthorized")
-	}
-
-	return nats.RemoveKV(ctx, KV_BUCKET, subject)
+	return nats.RemoveKV(ctx, KV_BUCKET, keyID)
 }
 
 // ValidateAPIKey validates an API key and secret
-func ValidateAPIKey(ctx context.Context, userID, keyID, secret string) (*APIKey, error) {
-	subject := fmt.Sprintf("apikeys.%s.%s", userID, keyID)
-	entry, err := nats.GetKV(ctx, KV_BUCKET, subject)
+func ValidateAPIKey(ctx context.Context, keyID, secret string) (*APIKey, error) {
+	entry, err := nats.GetKV(ctx, KV_BUCKET, keyID)
 	if err != nil {
 		return nil, fmt.Errorf("API key not found: %w", err)
 	}

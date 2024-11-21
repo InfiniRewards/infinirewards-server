@@ -2,14 +2,11 @@ package utils
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -17,45 +14,22 @@ import (
 var BOLD_USER string
 var BOLD_PASS string
 var BOLD_SERVID string
-var MOCK_OTP_DISCORD_URL string
 
-func init() {
+func InitMacroKiosk() error {
 	err := godotenv.Load(".env")
 
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		return fmt.Errorf("error loading .env file: %v", err)
 	}
 
 	BOLD_USER = os.Getenv("BOLD_USER")
 	BOLD_PASS = os.Getenv("BOLD_PASS")
 	BOLD_SERVID = os.Getenv("BOLD_SERVID")
-	MOCK_OTP_DISCORD_URL = os.Getenv("MOCK_OTP_DISCORD_URL")
+
+	return nil
 }
 
 func SendSMS(phoneNumber string, code string) error {
-	if phoneNumber == "+60143382537" {
-		jsonData, err := json.Marshal(struct {
-			UserName string `json:"username"`
-			Content  string `json:"content"`
-		}{UserName: phoneNumber, Content: fmt.Sprintf("JOMFI: Thanks for registering JomFi. Your OTP is %s. Valid for 15 minutes.", code)})
-		if err != nil {
-			return err
-		}
-		request, err := http.NewRequest("POST", MOCK_OTP_DISCORD_URL, bytes.NewBuffer(jsonData))
-		if err != nil {
-			return err
-		}
-		request.Header.Set("Content-Type", "application/json; charset=UTF-8")
-		netClient := &http.Client{
-			Timeout: time.Second * 10,
-		}
-		resp, err := netClient.Do(request)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-		return nil
-	}
 	httpposturl := "https://www.etracker.cc/bulksms/send"
 
 	var jsonData = []byte(fmt.Sprintf(`{

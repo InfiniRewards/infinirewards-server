@@ -17,6 +17,11 @@ definitions:
     type: object
   models.AuthenticateRequest:
     properties:
+      device:
+        description: |-
+          Device is a unique device identifier
+          example: device_123
+        type: string
       id:
         description: |-
           ID is either a verification ID (for OTP) or API key ID
@@ -41,6 +46,7 @@ definitions:
           example: 123456
         type: string
     required:
+    - device
     - id
     - method
     - signature
@@ -49,7 +55,7 @@ definitions:
   models.AuthenticateResponse:
     properties:
       token:
-        type: string
+        $ref: '#/definitions/models.Token'
     type: object
   models.BurnPointsRequest:
     properties:
@@ -185,16 +191,6 @@ definitions:
         maxLength: 100
         minLength: 1
         type: string
-      phoneNumber:
-        description: |-
-          PhoneNumber must be in E.164 format
-          example: +60123456789
-        type: string
-      publicKey:
-        description: |-
-          PublicKey is the merchant's public key
-          example: 0x1234567890abcdef1234567890abcdef12345678
-        type: string
       symbol:
         description: |-
           Symbol for the points token
@@ -203,8 +199,6 @@ definitions:
     required:
     - decimals
     - name
-    - phoneNumber
-    - publicKey
     - symbol
     type: object
   models.CreateMerchantResponse:
@@ -277,8 +271,6 @@ definitions:
       email:
         type: string
       name:
-        type: string
-      phoneNumber:
         type: string
     type: object
   models.ErrorResponse:
@@ -402,6 +394,23 @@ definitions:
           IsValid indicates if the collectible is still valid
           example: true
         type: boolean
+    type: object
+  models.Merchant:
+    properties:
+      address:
+        type: string
+      createdAt:
+        type: string
+      decimals:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      symbol:
+        type: string
+      updatedAt:
+        type: string
     type: object
   models.MessageResponse:
     properties:
@@ -570,8 +579,6 @@ definitions:
     type: object
   models.RefreshTokenRequest:
     properties:
-      accessToken:
-        type: string
       refreshToken:
         type: string
     type: object
@@ -667,11 +674,6 @@ definitions:
           Amount of points to transfer
           example: 25
         type: string
-      from:
-        description: |-
-          From is the sender's address
-          example: 0x1234567890abcdef1234567890abcdef12345678
-        type: string
       pointsContract:
         description: |-
           PointsContract is the address of the points contract
@@ -684,7 +686,6 @@ definitions:
         type: string
     required:
     - amount
-    - from
     - pointsContract
     - to
     type: object
@@ -704,8 +705,6 @@ definitions:
         type: string
       name:
         type: string
-      phoneNumber:
-        type: string
     type: object
   models.User:
     properties:
@@ -720,16 +719,15 @@ definitions:
         type: string
       id:
         type: string
-      nKey:
-        type: string
       name:
-        type: string
-      natsPublicKey:
         type: string
       phoneNumber:
         type: string
       privateKey:
         description: StarkNet private key
+        type: string
+      publicKey:
+        description: StarkNet public key
         type: string
       updatedAt:
         type: string
@@ -1252,7 +1250,35 @@ paths:
       summary: Mint collectible tokens
       tags:
       - collectibles
-  /merchants:
+  /merchant:
+    get:
+      consumes:
+      - application/json
+      description: Get details of a merchant
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Merchant details
+          schema:
+            $ref: '#/definitions/models.Merchant'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Not a merchant account
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get merchant details
+      tags:
+      - merchants
     post:
       consumes:
       - application/json
@@ -1286,7 +1312,7 @@ paths:
       summary: Create new merchant
       tags:
       - merchants
-  /merchants/collectible-contracts:
+  /merchant/collectible-contracts:
     get:
       consumes:
       - application/json
@@ -1315,7 +1341,7 @@ paths:
       summary: Get merchant's collectible contracts
       tags:
       - merchants
-  /merchants/collectibles:
+  /merchant/collectibles:
     post:
       consumes:
       - application/json
@@ -1355,7 +1381,7 @@ paths:
       summary: Create collectible contract
       tags:
       - merchants
-  /merchants/points:
+  /merchant/points:
     post:
       consumes:
       - application/json
@@ -1395,7 +1421,7 @@ paths:
       summary: Create points contract
       tags:
       - merchants
-  /merchants/points-contracts:
+  /merchant/points-contracts:
     get:
       consumes:
       - application/json
@@ -1579,13 +1605,69 @@ paths:
       summary: Transfer points between accounts
       tags:
       - points
-  /users:
+  /user:
+    delete:
+      consumes:
+      - application/json
+      description: Delete authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            $ref: '#/definitions/models.MessageResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - user
+    get:
+      consumes:
+      - application/json
+      description: Get authenticated user details
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User details retrieved successfully
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Authentication error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user details
+      tags:
+      - user
     post:
       consumes:
       - application/json
-      description: Create a new user with the provided information
+      description: Create a new user
       parameters:
-      - description: User creation request
+      - description: User Creation Request
         in: body
         name: request
         required: true
@@ -1610,95 +1692,15 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
-      summary: Create new user
+      summary: Create user
       tags:
-      - users
-  /users/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete an existing user
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: User deleted successfully
-          schema:
-            $ref: '#/definitions/models.MessageResponse'
-        "401":
-          description: Unauthorized access
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: User not found
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Delete user
-      tags:
-      - users
-    get:
-      consumes:
-      - application/json
-      description: Get detailed information about a user by their ID
-      parameters:
-      - description: User ID
-        example: user:01HNA...
-        format: ulid
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: User details retrieved successfully
-          schema:
-            $ref: '#/definitions/models.User'
-        "400":
-          description: Invalid request format
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: Authentication error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: User not found
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get user details
-      tags:
-      - users
+      - user
     put:
       consumes:
       - application/json
-      description: Update an existing user's information
+      description: Update authenticated user details
       parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: User update request
+      - description: User Update Request
         in: body
         name: request
         required: true
@@ -1708,7 +1710,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Updated user details
+          description: User updated successfully
           schema:
             $ref: '#/definitions/models.User'
         "400":
@@ -1729,20 +1731,14 @@ paths:
             $ref: '#/definitions/models.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update user details
+      summary: Update user
       tags:
-      - users
-  /users/{id}/api-keys:
+      - user
+  /user/api-keys:
     get:
       consumes:
       - application/json
-      description: List all API keys for a user
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
+      description: List all API keys for authenticated user
       produces:
       - application/json
       responses:
@@ -1768,14 +1764,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new API key for a user
+      description: Create a new API key for authenticated user
       parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: API key creation request
+      - description: API Key Creation Request
         in: body
         name: request
         required: true
@@ -1785,7 +1776,7 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created API key details
+          description: API key created successfully
           schema:
             $ref: '#/definitions/models.APIKey'
         "400":
@@ -1805,17 +1796,12 @@ paths:
       summary: Create API key
       tags:
       - api-keys
-  /users/{id}/api-keys/{keyId}:
+  /user/api-keys/{keyId}:
     delete:
       consumes:
       - application/json
-      description: Delete an API key
+      description: Delete an API key for authenticated user
       parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
       - description: API Key ID
         in: path
         name: keyId

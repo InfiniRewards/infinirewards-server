@@ -12,9 +12,9 @@ import (
 )
 
 // CreateUser creates a user account
-// @param publicKey: The public key of the user
-// @param phoneNumber: The phone number of the user
-// @return: The transaction hash, the address of the user, and an error
+//	@param		publicKey:		The	public	key		of	the	user
+//	@param		phoneNumber:	The	phone	number	of	the	user
+//	@return:	The transaction hash, the address of the user, and an error
 func CreateUser(publicKey string, phoneNumber string) (string, string, error) {
 	// Convert publicKey and phoneNumberHash to felt
 	publicKeyFelt, err := utils.HexToFelt(publicKey)
@@ -36,12 +36,12 @@ func CreateUser(publicKey string, phoneNumber string) (string, string, error) {
 }
 
 // CreateMerchant creates a merchant account
-// @param publicKey: The public key of the merchant
-// @param phoneNumber: The phone number of the merchant
-// @param name: The name of the initial points contract
-// @param symbol: The symbol of the initial points contract
-// @param decimals: The decimals of the initial points contract
-// @return: The transaction hash, the address of the merchant, the address of the points, and an error
+//	@param		publicKey:		The	public		key		of	the		merchant
+//	@param		phoneNumber:	The	phone		number	of	the		merchant
+//	@param		name:			The	name		of		the	initial	points	contract
+//	@param		symbol:			The	symbol		of		the	initial	points	contract
+//	@param		decimals:		The	decimals	of		the	initial	points	contract
+//	@return:	The transaction hash, the address of the merchant, the address of the points, and an error
 func CreateMerchant(publicKey string, phoneNumber string, name string, symbol string, decimals uint64) (string, string, string, error) {
 	phoneNumberHashFelt := HashPhoneNumber(phoneNumber)
 	// Convert publicKey and phoneNumberHash to felt
@@ -77,10 +77,10 @@ func CreateMerchant(publicKey string, phoneNumber string, name string, symbol st
 }
 
 // CreateInfiniRewardsCollectible creates a collectible contract
-// @param account: The account of the merchant
-// @param name: The name of the collectible
-// @param description: The description of the collectible
-// @return: The transaction hash, the address of the collectible, and an error
+//	@param		account:		The	account		of	the	merchant
+//	@param		name:			The	name		of	the	collectible
+//	@param		description:	The	description	of	the	collectible
+//	@return:	The transaction hash, the address of the collectible, and an error
 func CreateInfiniRewardsCollectible(account *account.Account, name string, description string) (string, string, error) {
 	calldata := []*felt.Felt{}
 	nameFelt, err := utils.StringToByteArrFelt(name)
@@ -120,12 +120,12 @@ func CreateInfiniRewardsCollectible(account *account.Account, name string, descr
 // }
 
 // CreateAdditionalPointsContract creates an additional points contract
-// @param account: The account of the merchant
-// @param name: The name of the points contract
-// @param symbol: The symbol of the points contract
-// @param description: The description of the points contract
-// @param decimals: The decimals of the points contract
-// @return: The transaction hash, the address of the points, and an error
+//	@param		account:		The	account		of	the	merchant
+//	@param		name:			The	name		of	the	points	contract
+//	@param		symbol:			The	symbol		of	the	points	contract
+//	@param		description:	The	description	of	the	points	contract
+//	@param		decimals:		The	decimals	of	the	points	contract
+//	@return:	The transaction hash, the address of the points, and an error
 func CreateAdditionalPointsContract(ctx context.Context, account *account.Account, name, symbol, description string, decimals *big.Int) (string, string, error) {
 	calldata := []*felt.Felt{}
 	nameFelt, err := utils.StringToByteArrFelt(name)
@@ -154,48 +154,48 @@ func CreateAdditionalPointsContract(ctx context.Context, account *account.Accoun
 	return receipt.TransactionHash.String(), PadZerosInFelt(receipt.TransactionReceipt.Events[0].FromAddress), nil
 }
 
-// GetUserAccount gets a user account
-// @param phoneNumberHash: The phone number hash of the user
-// @return: The address of the user and an error
-func GetUserAccount(ctx context.Context, phoneNumberHash string) (string, error) {
-	phoneNumberHashFelt, err := utils.HexToFelt(phoneNumberHash)
-	if err != nil {
-		return "", fmt.Errorf("failed to convert phone number hash to felt: %w", err)
-	}
-	factoryAddressFelt, err := utils.HexToFelt(InfiniRewardsFactoryAddress)
-	if err != nil {
-		return "", fmt.Errorf("failed to convert factory address to felt: %w", err)
-	}
+// // GetUserAccount gets a user account
+// // @param phoneNumberHash: The phone number hash of the user
+// // @return: The address of the user and an error
+// func GetUserAccount(ctx context.Context, phoneNumberHash string) (string, error) {
+// 	phoneNumberHashFelt, err := utils.HexToFelt(phoneNumberHash)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to convert phone number hash to felt: %w", err)
+// 	}
+// 	factoryAddressFelt, err := utils.HexToFelt(InfiniRewardsFactoryAddress)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to convert factory address to felt: %w", err)
+// 	}
 
-	calldata := []*felt.Felt{phoneNumberHashFelt}
+// 	calldata := []*felt.Felt{phoneNumberHashFelt}
 
-	resp, err := CallContract(ctx, factoryAddressFelt, "get_user_account", calldata)
-	if err != nil {
-		return "", fmt.Errorf("failed to get user account: %v", err)
-	}
+// 	resp, err := CallContract(ctx, factoryAddressFelt, "get_user_account", calldata)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to get user account: %v", err)
+// 	}
 
-	return PadZerosInFelt(resp[0]), nil
-}
+// 	return PadZerosInFelt(resp[0]), nil
+// }
 
-// GetMerchantAccount gets a merchant account
-// @param phoneNumberHash: The phone number hash of the merchant
-// @return: The address of the merchant and an error
-func GetMerchantAccount(ctx context.Context, phoneNumberHash string) (string, error) {
-	phoneNumberHashFelt, err := utils.HexToFelt(phoneNumberHash)
-	if err != nil {
-		return "", fmt.Errorf("failed to convert phone number hash to felt: %w", err)
-	}
-	factoryAddressFelt, err := utils.HexToFelt(InfiniRewardsFactoryAddress)
-	if err != nil {
-		return "", fmt.Errorf("failed to convert factory address to felt: %w", err)
-	}
+// // GetMerchantAccount gets a merchant account
+// // @param phoneNumberHash: The phone number hash of the merchant
+// // @return: The address of the merchant and an error
+// func GetMerchantAccount(ctx context.Context, phoneNumberHash string) (string, error) {
+// 	phoneNumberHashFelt, err := utils.HexToFelt(phoneNumberHash)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to convert phone number hash to felt: %w", err)
+// 	}
+// 	factoryAddressFelt, err := utils.HexToFelt(InfiniRewardsFactoryAddress)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to convert factory address to felt: %w", err)
+// 	}
 
-	calldata := []*felt.Felt{phoneNumberHashFelt}
+// 	calldata := []*felt.Felt{phoneNumberHashFelt}
 
-	resp, err := CallContract(ctx, factoryAddressFelt, "get_merchant_account", calldata)
-	if err != nil {
-		return "", fmt.Errorf("failed to get merchant account: %v", err)
-	}
+// 	resp, err := CallContract(ctx, factoryAddressFelt, "get_merchant_account", calldata)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to get merchant account: %v", err)
+// 	}
 
-	return PadZerosInFelt(resp[0]), nil
-}
+// 	return PadZerosInFelt(resp[0]), nil
+// }

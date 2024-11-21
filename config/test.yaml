@@ -1,0 +1,8 @@
+starknet:
+  network: devnet
+  rpc: http://127.0.0.1:5050
+  accounts:
+    - address: "0x1234..."  # Test account address
+      private_key: "0x1234..."  # Test account private key
+    - address: "0x5678..."  # Another test account
+      private_key: "0x5678..." 

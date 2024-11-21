@@ -34,7 +34,6 @@ type RequestOTPResponse struct {
 
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refreshToken"`
-	AccessToken  string `json:"accessToken"`
 }
 
 type RefreshTokenResponse struct {
@@ -58,10 +57,14 @@ type AuthenticateRequest struct {
 	// Signature is a unique device identifier
 	// example: device_signature_123
 	Signature string `json:"signature" validate:"required"`
+
+	// Device is a unique device identifier
+	// example: device_123
+	Device string `json:"device" validate:"required"`
 }
 
 type AuthenticateResponse struct {
-	Token string `json:"token"`
+	Token Token `json:"token"`
 }
 
 func (r *RequestOTPRequest) Validate() error {
@@ -80,12 +83,6 @@ func (r *RefreshTokenRequest) Validate() error {
 		return &ValidationError{
 			Field:   "refreshToken",
 			Message: "refresh token is required",
-		}
-	}
-	if r.AccessToken == "" {
-		return &ValidationError{
-			Field:   "accessToken",
-			Message: "access token is required",
 		}
 	}
 	return nil

@@ -9,8 +9,8 @@ import (
 )
 
 // GetPhoneNumber gets the phone number hash of a user
-// @param account: The account of the user
-// @return: The phone number hash and an error
+//	@param		account:	The	account	of	the	user
+//	@return:	The phone number hash and an error
 func GetPhoneNumber(ctx context.Context, account *account.Account) (string, error) {
 	calldata := []*felt.Felt{}
 

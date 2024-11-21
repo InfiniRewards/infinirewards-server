@@ -65,7 +65,7 @@ func TestInfiniRewards(t *testing.T) {
 		// time.Sleep(30 * time.Second)
 
 		// Create an account instance for the merchant
-		merchantAccount, err := infinirewards.GetAccount(merchantPrivKeyStr, merchantAddress)
+		merchantAccount, err := infinirewards.GetAccount(merchantPrivKeyStr, merchantPubKey.String(), merchantAddress)
 		if err != nil {
 			t.Logf("Error getting merchant account: %v", err)
 		}
@@ -133,7 +133,7 @@ func TestInfiniRewards(t *testing.T) {
 
 			t.Logf("Funded user account with address: %s, tx hash: %s", userAddress, txHash)
 
-			userAccount, err := infinirewards.GetAccount(userPrivKeyStr, userAddress)
+			userAccount, err := infinirewards.GetAccount(userPrivKeyStr, userPubKey.String(), userAddress)
 			if err != nil {
 				t.Logf("Error getting user account: %v", err)
 			}

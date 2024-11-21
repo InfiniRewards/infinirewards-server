@@ -96,6 +96,15 @@ func ConnectNats() error {
 	}
 
 	_, err = js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
+		Bucket:      "merchants",
+		Description: "Merchants",
+		MaxBytes:    -1,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create/update merchants KV bucket: %w", err)
+	}
+
+	_, err = js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
 		Bucket:      "apikeys",
 		Description: "API keys",
 		MaxBytes:    -1,
@@ -132,6 +141,10 @@ func PutKV(ctx context.Context, bucket string, key string, value []byte) error {
 }
 
 func GetKV(ctx context.Context, bucket string, key string) (jetstream.KeyValueEntry, error) {
+	if js == nil {
+		return nil, fmt.Errorf("JetStream not initialized")
+	}
+
 	kv, err := js.KeyValue(ctx, bucket)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get KV bucket: %w", err)
@@ -356,4 +369,137 @@ func GenerateUserJWT(userPublicKey, accountPublicKey string, accountSigningKey n
 	}
 	userJWT, err = uc.Encode(accountSigningKey)
 	return
+}
+
+// CreateKVBuckets creates all necessary KV buckets for testing
+func CreateKVBuckets() error {
+	js, err := jetstream.New(NC)
+	if err != nil {
+		return err
+	}
+
+	buckets := []string{"apikeys", "phoneVerification", "token", "users"}
+	for _, bucket := range buckets {
+		_, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
+			Bucket: bucket,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// CleanupKVBuckets deletes all KV buckets used in testing
+func CleanupKVBuckets() error {
+	js, err := jetstream.New(NC)
+	if err != nil {
+		return err
+	}
+
+	buckets := []string{"apikeys", "phoneVerification", "token", "users"}
+	for _, bucket := range buckets {
+		kv, err := js.KeyValue(context.Background(), bucket)
+		if err == nil {
+			// Get all keys in the bucket
+			keys, err := kv.Keys(context.Background())
+			if err == nil {
+				// Delete each key individually
+				for _, key := range keys {
+					kv.Delete(context.Background(), key)
+				}
+			}
+			// Delete the bucket itself
+			js.DeleteKeyValue(context.Background(), bucket)
+		}
+	}
+
+	return nil
+}
+
+// Close closes the NATS connection
+func Close() {
+	if NC != nil {
+		NC.Close()
+	}
+}
+
+func ConnectNatsTest() error {
+	var err error
+
+	// Connect to NATS
+	NC, err = nats.Connect("nats://127.0.0.1:4222",
+		nats.Name("InfiniRewards Test Server"),
+		nats.RetryOnFailedConnect(true),
+		nats.MaxReconnects(5),
+		nats.ReconnectWait(time.Second*5),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to connect to NATS server: %w", err)
+	}
+
+	// Initialize JetStream
+	js, err = jetstream.New(NC)
+	if err != nil {
+		return fmt.Errorf("failed to create JetStream context: %w", err)
+	}
+
+	// Create streams and buckets
+	if err := createTestStreams(); err != nil {
+		return fmt.Errorf("failed to create streams: %w", err)
+	}
+
+	if err := createTestBuckets(); err != nil {
+		return fmt.Errorf("failed to create buckets: %w", err)
+	}
+
+	return nil
+}
+
+// Add these helper functions
+func createTestStreams() error {
+	// Create webhooks stream
+	_, err := js.CreateOrUpdateStream(context.Background(), jetstream.StreamConfig{
+		Name:        "webhooks",
+		Description: "Stream of webhook requests",
+		Subjects:    []string{"webhooks.>"},
+		MaxBytes:    -1,
+		Retention:   jetstream.WorkQueuePolicy,
+		AllowDirect: true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create webhooks stream: %w", err)
+	}
+
+	return nil
+}
+
+func createTestBuckets() error {
+	// Create KV buckets
+	buckets := []struct {
+		name        string
+		description string
+		ttl         time.Duration
+	}{
+		{"token", "JWTs", time.Hour * 24 * 90},
+		{"users", "Users", 0},
+		{"merchants", "Merchants", 0},
+		{"apikeys", "API keys", 0},
+		{"phoneVerification", "Phone verifications", time.Minute * 5},
+	}
+
+	for _, bucket := range buckets {
+		_, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
+			Bucket:      bucket.name,
+			Description: bucket.description,
+			MaxBytes:    -1,
+			TTL:         bucket.ttl,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create %s bucket: %w", bucket.name, err)
+		}
+	}
+
+	return nil
 }

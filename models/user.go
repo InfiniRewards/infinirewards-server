@@ -6,21 +6,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"infinirewards/nats"
+	"regexp"
 	"time"
 )
 
 type CreateUserRequest struct {
-	PhoneNumber string `json:"phoneNumber"`
-	Email       string `json:"email"`
-	Name        string `json:"name"`
-	Avatar      string `json:"avatar"`
+	Email  string `json:"email"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
 }
 
 type UpdateUserRequest struct {
-	PhoneNumber string `json:"phoneNumber"`
-	Email       string `json:"email"`
-	Name        string `json:"name"`
-	Avatar      string `json:"avatar"`
+	Email  string `json:"email"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
 }
 
 // User represents a user in the InfiniRewards system.
@@ -32,8 +31,7 @@ type User struct {
 	Avatar         string    `json:"avatar"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
-	NKey           string    `json:"nKey"`
-	NatsPublicKey  string    `json:"natsPublicKey"`
+	PublicKey      string    `json:"publicKey"`      // StarkNet public key
 	PrivateKey     string    `json:"privateKey"`     // StarkNet private key
 	AccountAddress string    `json:"accountAddress"` // StarkNet account address
 }
@@ -119,12 +117,6 @@ func (u *User) DeleteUser(ctx context.Context) error {
 }
 
 func (r *CreateUserRequest) Validate() error {
-	if r.PhoneNumber == "" {
-		return &ValidationError{
-			Field:   "phoneNumber",
-			Message: "phone number is required",
-		}
-	}
 	if r.Name == "" {
 		return &ValidationError{
 			Field:   "name",
@@ -141,11 +133,15 @@ func (r *CreateUserRequest) Validate() error {
 func (r *UpdateUserRequest) Validate() error {
 	// For update requests, we'll allow partial updates
 	// but validate format of provided fields
-	if r.PhoneNumber != "" {
-		// Add phone number format validation if needed
-	}
 	if r.Email != "" {
-		// Add email format validation if needed
+		// validate email with regex
+		emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+		if !emailRegex.MatchString(r.Email) {
+			return &ValidationError{
+				Field:   "email",
+				Message: "invalid email format",
+			}
+		}
 	}
 	if r.Name != "" && len(r.Name) > 100 {
 		return &ValidationError{

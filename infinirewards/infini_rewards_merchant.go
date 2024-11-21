@@ -10,8 +10,8 @@ import (
 )
 
 // GetPointsContracts gets the points contracts of a merchant
-// @param account: The account of the merchant
-// @return: The addresses of the points contracts and an error
+//	@param		account:	The	account	of	the	merchant
+//	@return:	The addresses of the points contracts and an error
 func GetPointsContracts(ctx context.Context, account *account.Account) ([]string, error) {
 	calldata := []*felt.Felt{}
 
@@ -32,8 +32,8 @@ func GetPointsContracts(ctx context.Context, account *account.Account) ([]string
 }
 
 // GetCollectibleContracts gets the collectible contracts of a merchant
-// @param account: The account of the merchant
-// @return: The addresses of the collectible contracts and an error
+//	@param		account:	The	account	of	the	merchant
+//	@return:	The addresses of the collectible contracts and an error
 func GetCollectibleContracts(ctx context.Context, account *account.Account) ([]string, error) {
 	calldata := []*felt.Felt{}
 

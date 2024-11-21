@@ -1,0 +1,3 @@
+=== RUN   TestAuthFlow
+[TEST] 2024/11/18 16:12:54.791827 test_helpers.go:78: Setting up test environment for: TestAuthFlow
+[TEST] 2024/11/18 16:12:54.793314 test_helpers.go:86: ✅ Logs handler initialized

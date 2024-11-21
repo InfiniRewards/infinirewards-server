@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -105,14 +104,16 @@ type Row struct {
 	Description string `json:"description,omitempty"`
 }
 
-func init() {
+func InitWhatsApp() error {
 	err := godotenv.Load(".env")
 
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		return fmt.Errorf("error loading .env file: %v", err)
 	}
 	phoneId = os.Getenv("WHATSAPP_PHONE_ID")
 	token = os.Getenv("WHATSAPP_TOKEN")
+
+	return nil
 }
 
 func SendWhatsappLoginURL(to string, token string) (res map[string]interface{}, err error) {

@@ -790,7 +790,51 @@ const docTemplate = `{
                 }
             }
         },
-        "/merchants": {
+        "/merchant": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get details of a merchant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "merchants"
+                ],
+                "summary": "Get merchant details",
+                "responses": {
+                    "200": {
+                        "description": "Merchant details",
+                        "schema": {
+                            "$ref": "#/definitions/models.Merchant"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid authentication token",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not a merchant account",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new merchant account with initial points contract",
                 "consumes": [
@@ -842,7 +886,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/merchants/collectible-contracts": {
+        "/merchant/collectible-contracts": {
             "get": {
                 "security": [
                     {
@@ -888,7 +932,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/merchants/collectibles": {
+        "/merchant/collectibles": {
             "post": {
                 "security": [
                     {
@@ -951,7 +995,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/merchants/points": {
+        "/merchant/points": {
             "post": {
                 "security": [
                     {
@@ -1014,7 +1058,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/merchants/points-contracts": {
+        "/merchant/points-contracts": {
             "get": {
                 "security": [
                     {
@@ -1304,9 +1348,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/users": {
-            "post": {
-                "description": "Create a new user with the provided information",
+        "/user": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get authenticated user details",
                 "consumes": [
                     "application/json"
                 ],
@@ -1314,12 +1363,112 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "user"
                 ],
-                "summary": "Create new user",
+                "summary": "Get user details",
+                "responses": {
+                    "200": {
+                        "description": "User details retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update authenticated user details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Update user",
                 "parameters": [
                     {
-                        "description": "User creation request",
+                        "description": "User Update Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Create user",
+                "parameters": [
+                    {
+                        "description": "User Creation Request",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1354,137 +1503,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/users/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get detailed information about a user by their ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get user details",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "ulid",
-                        "example": "user:01HNA...",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User details retrieved successfully",
-                        "schema": {
-                            "$ref": "#/definitions/models.User"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request format",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Authentication error",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Update an existing user's information",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Update user details",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "User update request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.UpdateUserRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Updated user details",
-                        "schema": {
-                            "$ref": "#/definitions/models.User"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request format",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized access",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    }
-                }
             },
             "delete": {
                 "security": [
@@ -1492,7 +1510,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete an existing user",
+                "description": "Delete authenticated user",
                 "consumes": [
                     "application/json"
                 ],
@@ -1500,18 +1518,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "user"
                 ],
                 "summary": "Delete user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "User deleted successfully",
@@ -1540,14 +1549,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{id}/api-keys": {
+        "/user/api-keys": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "List all API keys for a user",
+                "description": "List all API keys for authenticated user",
                 "consumes": [
                     "application/json"
                 ],
@@ -1558,15 +1567,6 @@ const docTemplate = `{
                     "api-keys"
                 ],
                 "summary": "List API keys",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "List of API keys",
@@ -1597,7 +1597,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new API key for a user",
+                "description": "Create a new API key for authenticated user",
                 "consumes": [
                     "application/json"
                 ],
@@ -1610,14 +1610,7 @@ const docTemplate = `{
                 "summary": "Create API key",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "API key creation request",
+                        "description": "API Key Creation Request",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1628,7 +1621,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created API key details",
+                        "description": "API key created successfully",
                         "schema": {
                             "$ref": "#/definitions/models.APIKey"
                         }
@@ -1654,14 +1647,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{id}/api-keys/{keyId}": {
+        "/user/api-keys/{keyId}": {
             "delete": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete an API key",
+                "description": "Delete an API key for authenticated user",
                 "consumes": [
                     "application/json"
                 ],
@@ -1673,13 +1666,6 @@ const docTemplate = `{
                 ],
                 "summary": "Delete API key",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "API Key ID",
@@ -1744,12 +1730,17 @@ const docTemplate = `{
         "models.AuthenticateRequest": {
             "type": "object",
             "required": [
+                "device",
                 "id",
                 "method",
                 "signature",
                 "token"
             ],
             "properties": {
+                "device": {
+                    "description": "Device is a unique device identifier\nexample: device_123",
+                    "type": "string"
+                },
                 "id": {
                     "description": "ID is either a verification ID (for OTP) or API key ID\nexample: 01HNAJ6640M9JRRJFQSZZVE3HH",
                     "type": "string"
@@ -1776,7 +1767,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "token": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.Token"
                 }
             }
         },
@@ -1906,8 +1897,6 @@ const docTemplate = `{
             "required": [
                 "decimals",
                 "name",
-                "phoneNumber",
-                "publicKey",
                 "symbol"
             ],
             "properties": {
@@ -1922,14 +1911,6 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "minLength": 1
-                },
-                "phoneNumber": {
-                    "description": "PhoneNumber must be in E.164 format\nexample: +60123456789",
-                    "type": "string"
-                },
-                "publicKey": {
-                    "description": "PublicKey is the merchant's public key\nexample: 0x1234567890abcdef1234567890abcdef12345678",
-                    "type": "string"
                 },
                 "symbol": {
                     "description": "Symbol for the points token\nexample: PTS",
@@ -2008,9 +1989,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "phoneNumber": {
                     "type": "string"
                 }
             }
@@ -2149,6 +2127,32 @@ const docTemplate = `{
                 "isValid": {
                     "description": "IsValid indicates if the collectible is still valid\nexample: true",
                     "type": "boolean"
+                }
+            }
+        },
+        "models.Merchant": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "decimals": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },
@@ -2322,9 +2326,6 @@ const docTemplate = `{
         "models.RefreshTokenRequest": {
             "type": "object",
             "properties": {
-                "accessToken": {
-                    "type": "string"
-                },
                 "refreshToken": {
                     "type": "string"
                 }
@@ -2438,17 +2439,12 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "amount",
-                "from",
                 "pointsContract",
                 "to"
             ],
             "properties": {
                 "amount": {
                     "description": "Amount of points to transfer\nexample: 25",
-                    "type": "string"
-                },
-                "from": {
-                    "description": "From is the sender's address\nexample: 0x1234567890abcdef1234567890abcdef12345678",
                     "type": "string"
                 },
                 "pointsContract": {
@@ -2481,9 +2477,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                },
-                "phoneNumber": {
-                    "type": "string"
                 }
             }
         },
@@ -2506,13 +2499,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "nKey": {
-                    "type": "string"
-                },
                 "name": {
-                    "type": "string"
-                },
-                "natsPublicKey": {
                     "type": "string"
                 },
                 "phoneNumber": {
@@ -2520,6 +2507,10 @@ const docTemplate = `{
                 },
                 "privateKey": {
                     "description": "StarkNet private key",
+                    "type": "string"
+                },
+                "publicKey": {
+                    "description": "StarkNet public key",
                     "type": "string"
                 },
                 "updatedAt": {

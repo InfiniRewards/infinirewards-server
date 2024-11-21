@@ -19,10 +19,10 @@ import (
 )
 
 // InvokeTransactionMaster invokes a transaction on the master account
-// @param contractAddressStr: The address of the contract
-// @param functionSelectorStr: The selector of the function
-// @param calldata: The calldata of the function
-// @return: The transaction receipt and an error
+//	@param		contractAddressStr:		The	address		of	the	contract
+//	@param		functionSelectorStr:	The	selector	of	the	function
+//	@param		calldata:				The	calldata	of	the	function
+//	@return:	The transaction receipt and an error
 func InvokeTransactionMaster(contractAddressStr string, functionSelectorStr string, calldata []*felt.Felt) (*rpc.TransactionReceiptWithBlockInfo, error) {
 	contractAddress, err := utils.HexToFelt(contractAddressStr)
 	if err != nil {
@@ -105,11 +105,11 @@ func InvokeTransactionMaster(contractAddressStr string, functionSelectorStr stri
 }
 
 // InvokeTransaction invokes a transaction on an account
-// @param account: The account of the user
-// @param contractAddressStr: The address of the contract
-// @param functionSelectorStr: The selector of the function
-// @param calldata: The calldata of the function
-// @return: The transaction receipt and an error
+//	@param		account:				The	account		of	the	user
+//	@param		contractAddressStr:		The	address		of	the	contract
+//	@param		functionSelectorStr:	The	selector	of	the	function
+//	@param		calldata:				The	calldata	of	the	function
+//	@return:	The transaction receipt and an error
 func InvokeTransaction(account *account.Account, contractAddressStr string, functionSelectorStr string, calldata []*felt.Felt) (*rpc.TransactionReceiptWithBlockInfo, error) {
 	contractAddress, err := utils.HexToFelt(contractAddressStr)
 	if err != nil {
@@ -204,9 +204,9 @@ func SignInvokeTransaction(ctx context.Context, account *account.Account, invoke
 }
 
 // waitForTransaction waits for a transaction to be accepted
-// @param txHash: The hash of the transaction
-// @param maxRetries: The maximum number of retries
-// @return: The transaction status and an error
+//	@param		txHash:		The	hash	of		the	transaction
+//	@param		maxRetries:	The	maximum	number	of	retries
+//	@return:	The transaction status and an error
 func waitForTransaction(txHash *felt.Felt, maxRetries int) (*rpc.TxnStatusResp, error) {
 	for i := 0; i < maxRetries; i++ {
 		status, err := Client.GetTransactionStatus(context.Background(), txHash)
@@ -221,7 +221,7 @@ func waitForTransaction(txHash *felt.Felt, maxRetries int) (*rpc.TxnStatusResp, 
 		}
 
 		if status.FinalityStatus == rpc.TxnStatus_Accepted_On_L2 {
-			logs.Logger.Info("transaction confirmed",
+			logs.Logger.Debug("transaction confirmed",
 				slog.String("handler", "waitForTransaction"),
 				slog.String("tx_hash", txHash.String()),
 				slog.Int("attempts", i+1),
@@ -241,24 +241,24 @@ func waitForTransaction(txHash *felt.Felt, maxRetries int) (*rpc.TxnStatusResp, 
 }
 
 // GetAccount gets an account
-// @param provider: The provider
-// @param privateKey: The private key of the account
-// @param accountAddress: The address of the account
-// @return: The account and an error
-func GetAccount(privateKey string, accountAddress string) (*account.Account, error) {
+//	@param		provider:		The	provider
+//	@param		privateKey:		The	private	key	of	the	account
+//	@param		accountAddress:	The	address	of	the	account
+//	@return:	The account and an error
+func GetAccount(privateKey string, publicKey string, accountAddress string) (*account.Account, error) {
 	keyStore := account.NewMemKeystore()
 	privKeyBI, ok := new(big.Int).SetString(privateKey, 0)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert privKey to bigInt")
 	}
-	keyStore.Put(accountAddress, privKeyBI)
+	keyStore.Put(publicKey, privKeyBI)
 	// Here we are converting the account address to felt
 	accountAddressInFelt, err := HexToFelt(accountAddress)
 	if err != nil {
 		return nil, err
 	}
 	// Initialize the account
-	result, err := account.NewAccount(Client, accountAddressInFelt, accountAddress, keyStore, 2)
+	result, err := account.NewAccount(Client, accountAddressInFelt, publicKey, keyStore, 2)
 	if err != nil {
 		return nil, err
 	}
@@ -266,11 +266,11 @@ func GetAccount(privateKey string, accountAddress string) (*account.Account, err
 }
 
 // CallContract calls a contract
-// @param ctx: The context
-// @param contractAddress: The address of the contract
-// @param functionSelectorStr: The selector of the function
-// @param calldata: The calldata of the function
-// @return: The response and an error
+//	@param		ctx:					The	context
+//	@param		contractAddress:		The	address		of	the	contract
+//	@param		functionSelectorStr:	The	selector	of	the	function
+//	@param		calldata:				The	calldata	of	the	function
+//	@return:	The response and an error
 func CallContract(ctx context.Context, contractAddress *felt.Felt, functionSelectorStr string, calldata []*felt.Felt) ([]*felt.Felt, error) {
 	// Get balance from specified account address. Make read contract call with calldata
 	tx := rpc.FunctionCall{
@@ -302,12 +302,12 @@ func FundAccount(address string) (string, error) {
 			SenderAddress: masterAccnt.AccountAddress,
 		}}
 
-	// Converting the ETH contractAddress from hex to felt
+	// Converting the STRK contractAddress from hex to felt
 	contractAddress, err := HexToFelt("0x4718F5A0FC34CC1AF16A1CDEE98FFB20C31F5CD61D6AB07201858F4287C938D")
 	if err != nil {
 		return "", err
 	}
-	// Sending 0.1 ETH to the account
+	// Sending 1 STRK to the account
 	amount, _ := HexToFelt("0xDE0B6B3A7640000")
 	receipient, _ := HexToFelt(address)
 	// Building the functionCall struct, where :
@@ -388,22 +388,22 @@ func PadZerosInFelt(hexFelt *felt.Felt) string {
 }
 
 // HexToFelt converts a hex string to a felt
-// @param hexStr: The hex string
-// @return: The felt and an error
+//	@param		hexStr:	The	hex	string
+//	@return:	The felt and an error
 func HexToFelt(hexStr string) (*felt.Felt, error) {
 	return utils.HexToFelt(hexStr)
 }
 
 // StrToFelt converts a string to a felt
-// @param s: The string
-// @return: The felt and an error
+//	@param		s:	The	string
+//	@return:	The felt and an error
 func StrToFelt(s string) (*felt.Felt, error) {
 	return utils.HexToFelt(hex.EncodeToString([]byte(s)))
 }
 
 // PanicRPC panics on an RPC error
-// @param err: The error
-// @return: The error
+//	@param		err:	The	error
+//	@return:	The error
 func PanicRPC(err error) error {
 	return fmt.Errorf("RPC error: %w", err)
 }

@@ -177,10 +177,6 @@ type TransferPointsRequest struct {
 	// example: 0x1234567890abcdef1234567890abcdef12345678
 	PointsContract string `json:"pointsContract" validate:"required,eth_addr"`
 
-	// From is the sender's address
-	// example: 0x1234567890abcdef1234567890abcdef12345678
-	From string `json:"from" validate:"required,eth_addr"`
-
 	// To is the recipient's address
 	// example: 0x9876543210abcdef1234567890abcdef12345678
 	To string `json:"to" validate:"required,eth_addr"`
@@ -426,12 +422,6 @@ func (r *TransferPointsRequest) Validate() error {
 			Message: "points contract address is required",
 		}
 	}
-	if r.From == "" {
-		return &ValidationError{
-			Field:   "from",
-			Message: "sender address is required",
-		}
-	}
 	if r.To == "" {
 		return &ValidationError{
 			Field:   "to",
@@ -511,42 +501,6 @@ type SetTokenDataResponse struct {
 	// TransactionHash is the hash of the set data transaction
 	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
 	TransactionHash string `json:"transactionHash"`
-}
-
-type CreateMerchantRequest struct {
-	// PublicKey is the merchant's public key
-	// example: 0x1234567890abcdef1234567890abcdef12345678
-	PublicKey string `json:"publicKey" validate:"required,eth_addr"`
-
-	// PhoneNumber must be in E.164 format
-	// example: +60123456789
-	PhoneNumber string `json:"phoneNumber" validate:"required,e164"`
-
-	// Name of the merchant
-	// example: My Store
-	Name string `json:"name" validate:"required,min=1,max=100"`
-
-	// Symbol for the points token
-	// example: PTS
-	Symbol string `json:"symbol" validate:"required,len=3|len=4,uppercase"`
-
-	// Decimals for the points token
-	// example: 18
-	Decimals uint8 `json:"decimals" validate:"required,gte=0,lte=18"`
-}
-
-type CreateMerchantResponse struct {
-	// TransactionHash is the hash of the creation transaction
-	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
-	TransactionHash string `json:"transactionHash"`
-
-	// MerchantAddress is the deployed merchant contract address
-	// example: 0x1234567890abcdef1234567890abcdef12345678
-	MerchantAddress string `json:"merchantAddress"`
-
-	// PointsAddress is the deployed points contract address
-	// example: 0x9876543210abcdef1234567890abcdef12345678
-	PointsAddress string `json:"pointsAddress"`
 }
 
 type GetCollectibleDetailsResponse struct {
@@ -639,40 +593,6 @@ func (r *SetTokenDataRequest) Validate() error {
 		return &ValidationError{
 			Field:   "description",
 			Message: "description is required",
-		}
-	}
-	return nil
-}
-
-func (r *CreateMerchantRequest) Validate() error {
-	if r.PublicKey == "" {
-		return &ValidationError{
-			Field:   "publicKey",
-			Message: "public key is required",
-		}
-	}
-	if r.PhoneNumber == "" {
-		return &ValidationError{
-			Field:   "phoneNumber",
-			Message: "phone number is required",
-		}
-	}
-	if r.Name == "" {
-		return &ValidationError{
-			Field:   "name",
-			Message: "name is required",
-		}
-	}
-	if r.Symbol == "" {
-		return &ValidationError{
-			Field:   "symbol",
-			Message: "symbol is required",
-		}
-	}
-	if len(r.Symbol) < 3 || len(r.Symbol) > 4 {
-		return &ValidationError{
-			Field:   "symbol",
-			Message: "symbol must be 3-4 characters",
 		}
 	}
 	return nil

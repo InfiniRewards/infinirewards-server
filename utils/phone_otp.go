@@ -4,97 +4,75 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
-	"time"
-
-	"github.com/joho/godotenv"
+	"strings"
 )
 
-var (
-	// Test phone numbers that will receive OTP via Discord webhook
-	testPhoneNumbers = map[string]bool{
-		"+60143382537": true,
-		"+60123456789": true, // Add more test numbers as needed
-	}
-	// Discord webhook URL for test OTPs
-	discordWebhookURL string
-	isDebugMode       bool
-)
-
-func init() {
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	discordWebhookURL = os.Getenv("MOCK_OTP_DISCORD_URL")
-	isDebugMode = os.Getenv("DEBUG_MODE") == "true"
+var debugPhoneNumbers = []string{
+	"+60123456789",
+	"+60129876543",
 }
 
-// SendPhoneOTP handles all OTP sending logic with proper fallbacks
-func SendPhoneOTP(phoneNumber string, code string) error {
-	// In debug mode or for test numbers, send to Discord
-	if isDebugMode || testPhoneNumbers[phoneNumber] {
-		return sendTestOTPToDiscord(phoneNumber, code)
+// SendPhoneOTP sends OTP to the given phone number
+func SendPhoneOTP(phoneNumber string, otp string) error {
+	// For test phone numbers (+TEST...), just log and do nothing
+	if strings.HasPrefix(phoneNumber, "+TEST") {
+		slog.Info("Test OTP generated",
+			slog.String("phone", phoneNumber),
+			slog.String("otp", otp),
+		)
+		return nil
 	}
 
-	// Production flow: Try WhatsApp first, fallback to SMS
-	isWhatsAppUser, err := IsWhatsAppUser(phoneNumber)
-	if err != nil {
-		log.Printf("Error checking WhatsApp status: %v", err)
-		// Fallback to SMS on WhatsApp check error
-		return SendSMS(phoneNumber, code)
-	}
+	message := fmt.Sprintf("Your InfiniRewards verification code is: %s", otp)
 
-	if isWhatsAppUser {
-		err = SendWhatsAppOTP(phoneNumber, code)
-		if err == nil {
-			return nil // Successfully sent via WhatsApp
+	// Check if it's a debug phone number
+	for _, debugNumber := range debugPhoneNumbers {
+		if phoneNumber == debugNumber {
+			return SendDiscordMessage(message)
 		}
-		log.Printf("WhatsApp OTP failed, falling back to SMS: %v", err)
 	}
 
-	// Fallback or default to SMS
-	return SendSMS(phoneNumber, code)
+	// Check if user is WhatsApp user
+	isWhatsApp, err := IsWhatsAppUser(phoneNumber)
+	if err != nil {
+		return fmt.Errorf("failed to check WhatsApp status: %w", err)
+	}
+
+	if isWhatsApp {
+		return SendWhatsAppOTP(phoneNumber, message)
+	}
+
+	// For regular phone numbers, send via MacroKiosk SMS
+	return SendSMS(phoneNumber, message)
 }
 
-// sendTestOTPToDiscord sends OTP to Discord webhook for test phone numbers
-func sendTestOTPToDiscord(phoneNumber, code string) error {
-	message := struct {
-		Username string `json:"username"`
-		Content  string `json:"content"`
-	}{
-		Username: fmt.Sprintf("OTP Bot (%s)", phoneNumber),
-		Content: fmt.Sprintf("```\nTest OTP for %s\nCode: %s\nValid for: 15 minutes\n```",
-			phoneNumber, code),
+// SendDiscordMessage sends a message to Discord webhook
+func SendDiscordMessage(message string) error {
+	webhookURL := os.Getenv("DISCORD_WEBHOOK_URL")
+	if webhookURL == "" {
+		return fmt.Errorf("DISCORD_WEBHOOK_URL not set")
 	}
 
-	jsonData, err := json.Marshal(message)
+	payload := map[string]string{
+		"content": message,
+	}
+
+	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("error marshaling discord message: %w", err)
+		return fmt.Errorf("failed to marshal discord payload: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", discordWebhookURL, bytes.NewBuffer(jsonData))
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return fmt.Errorf("error creating discord request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{
-		Timeout: time.Second * 10,
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("error sending to discord: %w", err)
+		return fmt.Errorf("failed to send discord message: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("discord webhook error: status %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("discord webhook returned status: %d", resp.StatusCode)
 	}
 
 	return nil

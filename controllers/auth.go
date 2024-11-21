@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"infinirewards/jwt"
 	"infinirewards/logs"
 	"infinirewards/middleware"
 	"infinirewards/models"
@@ -19,30 +20,30 @@ import (
 )
 
 // RequestOTPHandler godoc
-// @Summary Request OTP
-// @Description Request a one-time password for authentication
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param request body models.RequestOTPRequest true "OTP Request"
-// @Success 200 {object} models.RequestOTPResponse "OTP sent successfully"
-// @Failure 400 {object} models.ErrorResponse "Invalid request format or validation failed"
-// @Failure 429 {object} models.ErrorResponse "Too many requests"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Request Body:
+//	@Summary		Request OTP
+//	@Description	Request a one-time password for authentication
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		models.RequestOTPRequest	true	"OTP Request"
+//	@Success		200		{object}	models.RequestOTPResponse	"OTP sent successfully"
+//	@Failure		400		{object}	models.ErrorResponse		"Invalid request format or validation failed"
+//	@Failure		429		{object}	models.ErrorResponse		"Too many requests"
+//	@Failure		500		{object}	models.ErrorResponse		"Internal server error"
+//	@Example		{json} Request Body:
 //
 //	{
 //	  "phoneNumber": "+60123456789"  // E.164 format required
 //	}
 //
-// @Example {json} Success Response:
+//	@Example		{json} Success Response:
 //
 //	{
 //	  "message": "OTP sent successfully",
 //	  "id": "01HNAJ6640M9JRRJFQSZZVE3HH"
 //	}
 //
-// @Example {json} Error Response (Invalid Phone):
+//	@Example		{json} Error Response (Invalid Phone):
 //
 //	{
 //	  "message": "Invalid phone number format",
@@ -53,7 +54,7 @@ import (
 //	  }
 //	}
 //
-// @Example {json} Error Response (Rate Limit):
+//	@Example		{json} Error Response (Rate Limit):
 //
 //	{
 //	  "message": "Too many OTP requests",
@@ -64,7 +65,7 @@ import (
 //	  }
 //	}
 //
-// @Example {json} Error Response (Server Error):
+//	@Example		{json} Error Response (Server Error):
 //
 //	{
 //	  "message": "Failed to send OTP",
@@ -74,7 +75,7 @@ import (
 //	  }
 //	}
 //
-// @Router /auth/request-otp [post]
+//	@Router			/auth/request-otp [post]
 func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -99,13 +100,10 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 	err := user.GetUserFromPhoneNumber(ctx, phoneNumber)
 	if err != nil {
 		// Create new user if not found
-		userPublicKey, userSeed := nats.GenerateUserKey()
+		// userPublicKey, userSeed := nats.GenerateUserKey()
 		user = models.User{
-			ID:            "users:" + ulid.Make().String(),
-			NKey:          string(userSeed),
-			NatsPublicKey: userPublicKey,
-			PhoneNumber:   phoneNumber,
-			CreatedAt:     time.Now(),
+			PhoneNumber: phoneNumber,
+			CreatedAt:   time.Now(),
 		}
 		if err := user.CreateUser(ctx); err != nil {
 			logs.Logger.Error("failed to create user",
@@ -193,18 +191,18 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // AuthenticateHandler godoc
-// @Summary Authenticate user
-// @Description Authenticate user using OTP or API key
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param request body models.AuthenticateRequest true "Authentication Request"
-// @Success 200 {object} models.AuthenticateResponse "Authentication successful"
-// @Failure 400 {object} models.ErrorResponse "Invalid request format or validation failed"
-// @Failure 401 {object} models.ErrorResponse "Authentication failed"
-// @Failure 429 {object} models.ErrorResponse "Too many attempts"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Request Body (OTP):
+//	@Summary		Authenticate user
+//	@Description	Authenticate user using OTP or API key
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		models.AuthenticateRequest	true	"Authentication Request"
+//	@Success		200		{object}	models.AuthenticateResponse	"Authentication successful"
+//	@Failure		400		{object}	models.ErrorResponse		"Invalid request format or validation failed"
+//	@Failure		401		{object}	models.ErrorResponse		"Authentication failed"
+//	@Failure		429		{object}	models.ErrorResponse		"Too many attempts"
+//	@Failure		500		{object}	models.ErrorResponse		"Internal server error"
+//	@Example		{json} Request Body (OTP):
 //
 //	{
 //	  "id": "01HNAJ6640M9JRRJFQSZZVE3HH",  // Verification ID from request-otp
@@ -213,7 +211,7 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 //	  "signature": "device_signature"        // Device identifier
 //	}
 //
-// @Example {json} Request Body (API Key):
+//	@Example		{json} Request Body (API Key):
 //
 //	{
 //	  "id": "key_01HNA...",                 // API key ID
@@ -222,7 +220,7 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 //	  "signature": "device_signature"       // Device identifier
 //	}
 //
-// @Example {json} Success Response:
+//	@Example		{json} Success Response:
 //
 //	{
 //	  "token": {
@@ -232,7 +230,7 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-// @Example {json} Error Response (Invalid OTP):
+//	@Example		{json} Error Response (Invalid OTP):
 //
 //	{
 //	  "message": "Invalid or expired OTP",
@@ -243,7 +241,7 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-// @Example {json} Error Response (Invalid API Key):
+//	@Example		{json} Error Response (Invalid API Key):
 //
 //	{
 //	  "message": "Invalid API key",
@@ -253,7 +251,7 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-// @Example {json} Error Response (Too Many Attempts):
+//	@Example		{json} Error Response (Too Many Attempts):
 //
 //	{
 //	  "message": "Too many authentication attempts",
@@ -264,7 +262,7 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-// @Router /auth/authenticate [post]
+//	@Router			/auth/authenticate [post]
 func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -305,14 +303,14 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate token
-	token, err := generateAuthToken(ctx, user, authenticateRequest.Signature)
+	token, err := createJWT(user.ID, authenticateRequest.Device)
 	if err != nil {
-		http.Error(w, "failed to generate token", http.StatusInternalServerError)
+		http.Error(w, "failed to generate token: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	response := models.AuthenticateResponse{
-		Token: token.AccessToken,
+		Token: *token,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -320,25 +318,25 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // RefreshTokenHandler godoc
-// @Summary Refresh token
-// @Description Refresh an existing authentication token
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param request body models.RefreshTokenRequest true "Token Refresh Request"
-// @Success 200 {object} models.RefreshTokenResponse "Token refreshed successfully"
-// @Failure 400 {object} models.ErrorResponse "Invalid request format"
-// @Failure 401 {object} models.ErrorResponse "Invalid or expired token"
-// @Failure 500 {object} models.ErrorResponse "Internal server error"
-// @Example {json} Request Body:
+//	@Summary		Refresh token
+//	@Description	Refresh an existing authentication token
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		models.RefreshTokenRequest	true	"Token Refresh Request"
+//	@Success		200		{object}	models.RefreshTokenResponse	"Token refreshed successfully"
+//	@Failure		400		{object}	models.ErrorResponse		"Invalid request format"
+//	@Failure		401		{object}	models.ErrorResponse		"Invalid or expired token"
+//	@Failure		500		{object}	models.ErrorResponse		"Internal server error"
+//	@Example		{json} Request Body:
 //
 //	{
 //	  "accessToken": "current_access_token",
 //	  "refreshToken": "refresh_token"
 //	}
 //
-// @Example {json} Success Response:
+//	@Example		{json} Success Response:
 //
 //	{
 //	  "token": {
@@ -348,7 +346,7 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-// @Example {json} Error Response (Invalid Token):
+//	@Example		{json} Error Response (Invalid Token):
 //
 //	{
 //	  "message": "Invalid refresh token",
@@ -358,7 +356,7 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-// @Example {json} Error Response (Token Mismatch):
+//	@Example		{json} Error Response (Token Mismatch):
 //
 //	{
 //	  "message": "Token mismatch",
@@ -368,7 +366,7 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-// @Example {json} Error Response (Server Error):
+//	@Example		{json} Error Response (Server Error):
 //
 //	{
 //	  "message": "Failed to refresh token",
@@ -378,7 +376,7 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-// @Router /auth/refresh-token [post]
+//	@Router			/auth/refresh-token [post]
 func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -404,8 +402,14 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if oldToken.AccessToken != refreshTokenRequest.AccessToken {
-		http.Error(w, "access token mismatch", http.StatusUnauthorized)
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if oldToken.User != userID {
+		http.Error(w, "user mismatch", http.StatusUnauthorized)
 		return
 	}
 
@@ -416,9 +420,9 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate new token
-	newToken, err := generateAuthToken(ctx, user, oldToken.Device)
+	newToken, err := createJWT(user.ID, oldToken.Device)
 	if err != nil {
-		http.Error(w, "failed to generate token", http.StatusInternalServerError)
+		http.Error(w, "failed to generate token: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -463,54 +467,27 @@ func handleOTPAuthentication(ctx context.Context, user *models.User, req models.
 			Algorithm: otp.AlgorithmSHA512,
 		},
 	)
-	if err != nil || !valid {
+	if err != nil {
+		return err
+	}
+	if !valid {
+		return fmt.Errorf("invalid OTP")
+	}
+
+	if err := user.GetUser(ctx, phoneNumberVerification.User); err != nil {
 		return err
 	}
 
-	return user.GetUser(ctx, phoneNumberVerification.User)
+	return nil
 }
 
 func handleAPIKeyAuthentication(ctx context.Context, user *models.User, req models.AuthenticateRequest) error {
-	apiKey, err := models.ValidateAPIKey(ctx, user.ID, req.ID, req.Token)
+	apiKey, err := models.ValidateAPIKey(ctx, req.ID, req.Token)
 	if err != nil {
 		return err
 	}
 
 	return user.GetUser(ctx, apiKey.UserID)
-}
-
-func generateAuthToken(ctx context.Context, user models.User, device string) (*models.Token, error) {
-	// Generate JWT token
-	tokenString, err := middleware.GenerateToken(user)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", err)
-	}
-
-	timeNow := time.Now()
-	token := &models.Token{
-		ID:                 ulid.Make().String(),
-		User:               user.ID,
-		AccessToken:        tokenString,
-		AccessTokenExpiry:  timeNow.Add(time.Hour * 24),
-		RefreshTokenExpiry: timeNow.AddDate(0, 0, 30),
-		Device:             device,
-		Service:            "infinirewards",
-		CreatedAt:          timeNow,
-	}
-
-	if err := storeToken(ctx, *token); err != nil {
-		return nil, err
-	}
-
-	return token, nil
-}
-
-func storeToken(ctx context.Context, token models.Token) error {
-	tokenData, err := json.Marshal(token)
-	if err != nil {
-		return err
-	}
-	return nats.PutKV(ctx, "token", token.ID, tokenData)
 }
 
 func getToken(ctx context.Context, tokenID string) (*models.Token, error) {
@@ -519,14 +496,50 @@ func getToken(ctx context.Context, tokenID string) (*models.Token, error) {
 		return nil, err
 	}
 
-	var token models.Token
-	if err := json.Unmarshal(data.Value(), &token); err != nil {
+	var userToken models.Token
+	if err := json.Unmarshal(data.Value(), &userToken); err != nil {
 		return nil, err
 	}
 
-	return &token, nil
+	return &userToken, nil
 }
 
 func removeToken(ctx context.Context, tokenID string) error {
 	return nats.RemoveKV(ctx, "token", tokenID)
+}
+
+func createJWT(userID string, device string) (*models.Token, error) {
+	// Generate a random token string
+	if userID == "" {
+		return nil, fmt.Errorf("user ID is required")
+	}
+
+	token, err := jwt.CreateToken(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	// Create token model
+	userToken := models.Token{
+		ID:                 ulid.Make().String(),
+		User:               userID,
+		AccessToken:        token,
+		AccessTokenExpiry:  time.Now().Add(24 * time.Hour),
+		RefreshTokenExpiry: time.Now().Add(30 * 24 * time.Hour),
+		Device:             device,
+		Service:            "infinirewards",
+		CreatedAt:          time.Now(),
+	}
+
+	// Store token in NATS KV
+	tokenBytes, err := json.Marshal(userToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal token: %w", err)
+	}
+
+	if err := nats.PutKV(context.Background(), "token", userToken.ID, tokenBytes); err != nil {
+		return nil, fmt.Errorf("failed to store token: %w", err)
+	}
+
+	return &userToken, nil
 }
