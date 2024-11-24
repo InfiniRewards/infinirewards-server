@@ -105,4 +105,17 @@ func SetUserRoutes(mux *http.ServeMux) {
 	//	@Failure		500		{string}	string	"Internal Server Error"
 	//	@Router			/user/api-keys/{keyId} [delete]
 	mux.HandleFunc("DELETE /user/api-keys/{keyId}", middleware.AuthMiddleware(controllers.UserDeleteAPIKeyHandler))
+
+	// @Summary		Upgrade User Contract
+	// @Description	Upgrade a user contract
+	// @Tags			user
+	// @Accept			json
+	// @Produce		json
+	// @Security		BearerAuth
+	// @Success		200		{object}	models.UpgradeUserContractResponse
+	// @Failure		400		{string}	string	"Bad Request"
+	// @Failure		401		{string}	string	"Unauthorized"
+	// @Failure		500		{string}	string	"Internal Server Error"
+	// @Router			/user/upgrade [post]
+	mux.HandleFunc("POST /user/upgrade", middleware.AuthMiddleware(controllers.UpgradeUserContractHandler))
 }

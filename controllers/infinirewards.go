@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"infinirewards/infinirewards"
 	"infinirewards/logs"
 	"infinirewards/middleware"
@@ -12,6 +13,7 @@ import (
 )
 
 // GetCollectibleBalanceHandler godoc
+//
 //	@Summary		Get collectible balance
 //	@Description	Get balance of collectible tokens for a specific token ID
 //	@Tags			collectibles
@@ -61,14 +63,18 @@ func GetCollectibleBalanceHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Extract address and tokenId from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing required path parameters",
+		}, http.StatusBadRequest)
 		return
 	}
 	address := parts[2]
@@ -76,30 +82,28 @@ func GetCollectibleBalanceHandler(w http.ResponseWriter, r *http.Request) {
 
 	tokenId, ok := new(big.Int).SetString(tokenIdStr, 0)
 	if !ok {
-		http.Error(w, "Invalid tokenId format", http.StatusBadRequest)
+		WriteError(w, "Invalid token ID", ValidationError, map[string]string{
+			"reason":  "Token ID must be a valid number",
+			"tokenId": tokenIdStr,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		logs.Logger.Error("GetCollectibleBalanceHandler failed to get user", "error", err)
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
-	// Use user's private key and address from database
-	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, user.AccountAddress)
+	balance, err := infinirewards.BalanceOf(ctx, user.AccountAddress, address, tokenId)
 	if err != nil {
-		logs.Logger.Error("GetCollectibleBalanceHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
-		return
-	}
-
-	balance, err := infinirewards.BalanceOf(ctx, account, address, tokenId)
-	if err != nil {
-		logs.Logger.Error("GetCollectibleBalanceHandler balance error", "error", err)
-		http.Error(w, "Failed to get balance", http.StatusInternalServerError)
+		WriteError(w, "Failed to get balance", InternalServerError, map[string]string{
+			"reason": "Failed to retrieve balance from blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -112,6 +116,7 @@ func GetCollectibleBalanceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetCollectibleURIHandler godoc
+//
 //	@Summary		Get collectible URI
 //	@Description	Get the URI for a specific collectible token's metadata
 //	@Tags			collectibles
@@ -148,7 +153,9 @@ func GetCollectibleURIHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract address and tokenId from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing required path parameters",
+		}, http.StatusBadRequest)
 		return
 	}
 	address := parts[2]
@@ -156,14 +163,19 @@ func GetCollectibleURIHandler(w http.ResponseWriter, r *http.Request) {
 
 	tokenId, ok := new(big.Int).SetString(tokenIdStr, 0)
 	if !ok {
-		http.Error(w, "Invalid tokenId format", http.StatusBadRequest)
+		WriteError(w, "Invalid token ID", ValidationError, map[string]string{
+			"reason":  "Token ID must be a valid number",
+			"tokenId": tokenIdStr,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	uri, err := infinirewards.URI(ctx, address, tokenId)
 	if err != nil {
-		logs.Logger.Error("GetCollectibleURIHandler URI error", "error", err)
-		http.Error(w, "Failed to get URI", http.StatusInternalServerError)
+		WriteError(w, "Failed to get URI", InternalServerError, map[string]string{
+			"reason": "Failed to retrieve URI from blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -176,6 +188,7 @@ func GetCollectibleURIHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // MintCollectibleHandler godoc
+//
 //	@Summary		Mint collectible tokens
 //	@Description	Mint new collectible tokens for a specified recipient
 //	@Tags			collectibles
@@ -245,7 +258,7 @@ func GetCollectibleURIHandler(w http.ResponseWriter, r *http.Request) {
 //	  }
 //	}
 //
-//	@Router			/collectibles/mint [post]
+//	@Router			/merchant/collectibles/mint [post]
 func MintCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logs.Logger.Info("MintCollectibleHandler called", "method", r.Method)
@@ -253,61 +266,71 @@ func MintCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		logs.Logger.Error("MintCollectibleHandler failed to get user", "error", err, "userId", userID)
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	var mintReq models.MintCollectibleRequest
 	if err := json.NewDecoder(r.Body).Decode(&mintReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
-	if err := mintReq.Validate(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Convert string amounts to big.Int
 	tokenId, ok := new(big.Int).SetString(mintReq.TokenId, 0)
 	if !ok {
-		http.Error(w, "Invalid tokenId format", http.StatusBadRequest)
+		WriteError(w, "Invalid token ID", ValidationError, map[string]string{
+			"reason":  "Token ID must be a valid number",
+			"tokenId": mintReq.TokenId,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	amount, ok := new(big.Int).SetString(mintReq.Amount, 0)
 	if !ok {
-		http.Error(w, "Invalid amount format", http.StatusBadRequest)
+		WriteError(w, "Invalid amount", ValidationError, map[string]string{
+			"reason": "Amount must be a valid number",
+			"amount": mintReq.Amount,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	merchant := &models.Merchant{}
 	if err := merchant.GetMerchant(ctx, userID); err != nil {
-		http.Error(w, "Failed to get merchant", http.StatusBadRequest)
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
 		return
 	}
 
 	// Get account using user's private key and address from database
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
 	if err != nil {
-		logs.Logger.Error("MintCollectibleHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	// Mint collectible
 	txHash, err := infinirewards.MintCollectible(account, mintReq.CollectibleAddress, mintReq.To, tokenId, amount)
 	if err != nil {
-		logs.Logger.Error("MintCollectibleHandler mint error", "error", err)
-		http.Error(w, "Failed to mint collectible", http.StatusInternalServerError)
+		WriteError(w, "Failed to mint collectible", InternalServerError, map[string]string{
+			"reason": "Failed to mint collectible on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -320,6 +343,7 @@ func MintCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // SetTokenDataHandler godoc
+//
 //	@Summary		Set token data
 //	@Description	Set metadata for a collectible token
 //	@Tags			collectibles
@@ -368,14 +392,18 @@ func SetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Extract address and tokenId from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing required path parameters",
+		}, http.StatusBadRequest)
 		return
 	}
 	address := parts[2]
@@ -383,7 +411,9 @@ func SetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 
 	var setReq models.SetTokenDataRequest
 	if err := json.NewDecoder(r.Body).Decode(&setReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
@@ -391,39 +421,53 @@ func SetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 	setReq.CollectibleAddress = address
 	setReq.TokenId = tokenIdStr
 	if err := setReq.Validate(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		WriteError(w, "Validation failed", ValidationError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusBadRequest)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	tokenId, ok := new(big.Int).SetString(setReq.TokenId, 0)
 	if !ok {
-		http.Error(w, "Invalid tokenId format", http.StatusBadRequest)
+		WriteError(w, "Invalid token ID", ValidationError, map[string]string{
+			"reason":  "Token ID must be a valid number",
+			"tokenId": setReq.TokenId,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	price, ok := new(big.Int).SetString(setReq.Price, 0)
 	if !ok {
-		http.Error(w, "Invalid price format", http.StatusBadRequest)
+		WriteError(w, "Invalid price format", ValidationError, map[string]string{
+			"reason": "Price must be a valid number",
+			"price":  setReq.Price,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	merchant := &models.Merchant{}
 	if err := merchant.GetMerchant(ctx, user.ID); err != nil {
-		http.Error(w, "Failed to get merchant", http.StatusBadRequest)
+		WriteError(w, "Failed to get merchant", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	// Use user's credentials from database
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
 	if err != nil {
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -437,8 +481,10 @@ func SetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 		setReq.Description,
 	)
 	if err != nil {
-		logs.Logger.Error("SetTokenDataHandler set error", "error", err)
-		http.Error(w, "Failed to set token data", http.StatusInternalServerError)
+		WriteError(w, "Failed to set token data", InternalServerError, map[string]string{
+			"reason": "Failed to set token data on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -453,6 +499,7 @@ func SetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 // Points-related handlers
 
 // MintPointsHandler godoc
+//
 //	@Summary		Mint points tokens
 //	@Description	Mint new points tokens for a specified recipient
 //	@Tags			points
@@ -508,41 +555,52 @@ func MintPointsHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	var mintReq models.MintPointsRequest
 	if err := json.NewDecoder(r.Body).Decode(&mintReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	amount, ok := new(big.Int).SetString(mintReq.Amount, 0)
 	if !ok {
-		http.Error(w, "Invalid amount format", http.StatusBadRequest)
+		WriteError(w, "Invalid amount format", ValidationError, map[string]string{
+			"reason": "Amount must be a valid number",
+			"amount": mintReq.Amount,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusBadRequest)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	merchant := &models.Merchant{}
 	if err := merchant.GetMerchant(ctx, userID); err != nil {
-		logs.Logger.Error("MintPointsHandler failed to get merchant", "error", err)
-		http.Error(w, "Failed to get merchant", http.StatusBadRequest)
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
 		return
 	}
 
 	// Use merchant's address for account
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
 	if err != nil {
-		logs.Logger.Error("MintPointsHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -553,8 +611,10 @@ func MintPointsHandler(w http.ResponseWriter, r *http.Request) {
 		amount,
 	)
 	if err != nil {
-		logs.Logger.Error("MintPointsHandler mint error", "error", err)
-		http.Error(w, "Failed to mint points", http.StatusInternalServerError)
+		WriteError(w, "Failed to mint points", InternalServerError, map[string]string{
+			"reason": "Failed to mint points on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -567,6 +627,7 @@ func MintPointsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // BurnPointsHandler godoc
+//
 //	@Summary		Burn points tokens
 //	@Description	Burn points tokens from a merchant's account
 //	@Tags			points
@@ -611,34 +672,44 @@ func BurnPointsHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	var burnReq models.BurnPointsRequest
 	if err := json.NewDecoder(r.Body).Decode(&burnReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	amount, ok := new(big.Int).SetString(burnReq.Amount, 0)
 	if !ok {
-		http.Error(w, "Invalid amount format", http.StatusBadRequest)
+		WriteError(w, "Invalid amount format", ValidationError, map[string]string{
+			"reason": "Amount must be a valid number",
+			"amount": burnReq.Amount,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	// Use user's credentials from database
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, user.AccountAddress)
 	if err != nil {
-		logs.Logger.Error("BurnPointsHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -648,8 +719,10 @@ func BurnPointsHandler(w http.ResponseWriter, r *http.Request) {
 		amount,
 	)
 	if err != nil {
-		logs.Logger.Error("BurnPointsHandler burn error", "error", err)
-		http.Error(w, "Failed to burn points", http.StatusInternalServerError)
+		WriteError(w, "Failed to burn points", InternalServerError, map[string]string{
+			"reason": "Failed to burn points on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -662,6 +735,7 @@ func BurnPointsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPointsBalanceHandler godoc
+//
 //	@Summary		Get points balance
 //	@Description	Get the points balance for a specific account
 //	@Tags			points
@@ -687,14 +761,18 @@ func GetPointsBalanceHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Extract address from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 4 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing required path parameters",
+		}, http.StatusBadRequest)
 		return
 	}
 	address := parts[2]
@@ -702,27 +780,45 @@ func GetPointsBalanceHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	// Use user's credentials from database
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, user.AccountAddress)
 	if err != nil {
-		logs.Logger.Error("GetPointsBalanceHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	name, symbol, description, decimals, _, err := infinirewards.GetPointsContractDetails(ctx, address)
+	if err != nil {
+		WriteError(w, "Failed to get points contract details", InternalServerError, map[string]string{
+			"reason": "Failed to retrieve points contract details from blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	balance, err := infinirewards.GetBalance(ctx, account, address)
 	if err != nil {
-		logs.Logger.Error("GetPointsBalanceHandler balance error", "error", err)
-		http.Error(w, "Failed to get balance", http.StatusInternalServerError)
+		WriteError(w, "Failed to get balance", InternalServerError, map[string]string{
+			"reason": "Failed to retrieve balance from blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	resp := models.GetPointsBalanceResponse{
-		Balance: balance.String(),
+		Balance:     balance.String(),
+		Name:        name,
+		Symbol:      symbol,
+		Decimals:    decimals,
+		Description: description,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -730,6 +826,7 @@ func GetPointsBalanceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // TransferPointsHandler godoc
+//
 //	@Summary		Transfer points between accounts
 //	@Description	Transfer points from one account to another
 //	@Tags			points
@@ -776,34 +873,44 @@ func TransferPointsHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	var transferReq models.TransferPointsRequest
 	if err := json.NewDecoder(r.Body).Decode(&transferReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	amount, ok := new(big.Int).SetString(transferReq.Amount, 0)
 	if !ok {
-		http.Error(w, "Invalid amount format", http.StatusBadRequest)
+		WriteError(w, "Invalid amount format", ValidationError, map[string]string{
+			"reason": "Amount must be a valid number",
+			"amount": transferReq.Amount,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	// Use user's credentials from database
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, user.AccountAddress)
 	if err != nil {
-		logs.Logger.Error("TransferPointsHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -815,8 +922,10 @@ func TransferPointsHandler(w http.ResponseWriter, r *http.Request) {
 		amount,
 	)
 	if err != nil {
-		logs.Logger.Error("TransferPointsHandler transfer error", "error", err)
-		http.Error(w, "Failed to transfer points", http.StatusInternalServerError)
+		WriteError(w, "Failed to transfer points", InternalServerError, map[string]string{
+			"reason": "Failed to transfer points on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -829,6 +938,7 @@ func TransferPointsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetTokenDataHandler godoc
+//
 //	@Summary		Get token data
 //	@Description	Get metadata for a collectible token
 //	@Tags			collectibles
@@ -879,7 +989,9 @@ func GetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract address and tokenId from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing required path parameters",
+		}, http.StatusBadRequest)
 		return
 	}
 	address := parts[2]
@@ -887,7 +999,10 @@ func GetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 
 	tokenId, ok := new(big.Int).SetString(tokenIdStr, 0)
 	if !ok {
-		http.Error(w, "Invalid tokenId format", http.StatusBadRequest)
+		WriteError(w, "Invalid token ID", ValidationError, map[string]string{
+			"reason":  "Token ID must be a valid number",
+			"tokenId": tokenIdStr,
+		}, http.StatusBadRequest)
 		return
 	}
 
@@ -897,8 +1012,10 @@ func GetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 		tokenId,
 	)
 	if err != nil {
-		logs.Logger.Error("GetTokenDataHandler get error", "error", err)
-		http.Error(w, "Failed to get token data", http.StatusInternalServerError)
+		WriteError(w, "Failed to get token data", InternalServerError, map[string]string{
+			"reason": "Failed to retrieve token data from blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -914,6 +1031,7 @@ func GetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // RedeemCollectibleHandler godoc
+//
 //	@Summary		Redeem collectible
 //	@Description	Redeem a collectible token
 //	@Tags			collectibles
@@ -972,21 +1090,27 @@ func RedeemCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Extract address from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 4 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing required path parameters",
+		}, http.StatusBadRequest)
 		return
 	}
 	address := parts[2]
 
 	var redeemReq models.RedeemCollectibleRequest
 	if err := json.NewDecoder(r.Body).Decode(&redeemReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
@@ -995,34 +1119,45 @@ func RedeemCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 
 	tokenId, ok := new(big.Int).SetString(redeemReq.TokenId, 0)
 	if !ok {
-		http.Error(w, "Invalid tokenId format", http.StatusBadRequest)
+		WriteError(w, "Invalid token ID", ValidationError, map[string]string{
+			"reason":  "Token ID must be a valid number",
+			"tokenId": redeemReq.TokenId,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	amount, ok := new(big.Int).SetString(redeemReq.Amount, 0)
 	if !ok {
-		http.Error(w, "Invalid amount format", http.StatusBadRequest)
+		WriteError(w, "Invalid amount format", ValidationError, map[string]string{
+			"reason": "Amount must be a valid number",
+			"amount": redeemReq.Amount,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusBadRequest)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	merchant := &models.Merchant{}
 	if err := merchant.GetMerchant(ctx, userID); err != nil {
-		http.Error(w, "Failed to get merchant", http.StatusBadRequest)
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
 		return
 	}
 
 	// Use user's credentials from database
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
 	if err != nil {
-		logs.Logger.Error("RedeemCollectibleHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -1035,8 +1170,10 @@ func RedeemCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 		amount,
 	)
 	if err != nil {
-		logs.Logger.Error("RedeemCollectibleHandler redeem error", "error", err)
-		http.Error(w, "Failed to redeem collectible", http.StatusInternalServerError)
+		WriteError(w, "Failed to redeem collectible", InternalServerError, map[string]string{
+			"reason": "Failed to redeem collectible on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -1049,6 +1186,7 @@ func RedeemCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetCollectibleDetailsHandler godoc
+//
 //	@Summary		Get collectible details
 //	@Description	Get detailed information about a collectible contract
 //	@Tags			collectibles
@@ -1089,27 +1227,60 @@ func GetCollectibleDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract address from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 3 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing required path parameters",
+		}, http.StatusBadRequest)
 		return
 	}
 	address := parts[2]
 
-	description, pointsContract, tokenIDs, tokenPrices, tokenExpiries, tokenDescriptions, err := infinirewards.GetDetails(
+	name, description, pointsContract, tokenIDs, tokenPrices, tokenExpiries, tokenDescriptions, tokenSupplies, err := infinirewards.GetDetails(
 		ctx,
 		address,
 	)
 	if err != nil {
-		logs.Logger.Error("GetCollectibleDetailsHandler details error", "error", err)
-		http.Error(w, "Failed to get collectible details", http.StatusInternalServerError)
+		WriteError(w, "Failed to get collectible details", InternalServerError, map[string]string{
+			"reason": "Failed to retrieve collectible details from blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
+		return
+	}
+
+	user := &models.User{}
+	if err := user.GetUser(ctx, userID); err != nil {
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	// Convert big.Int arrays to string arrays
 	tokenIDStrings := make([]string, len(tokenIDs))
 	tokenPriceStrings := make([]string, len(tokenPrices))
+	tokenBalanceStrings := make([]string, len(tokenIDs))
+	tokenSupplyStrings := make([]string, len(tokenSupplies))
 	for i, id := range tokenIDs {
 		if id != nil {
 			tokenIDStrings[i] = id.String()
+			balance, err := infinirewards.BalanceOf(ctx, user.AccountAddress, address, id)
+			if err != nil {
+				WriteError(w, "Failed to get token balance", InternalServerError, map[string]string{
+					"reason": "Failed to get token balance from blockchain",
+					"error":  err.Error(),
+				}, http.StatusInternalServerError)
+				return
+			}
+			tokenBalanceStrings[i] = balance.String()
+			tokenSupplyStrings[i] = fmt.Sprintf("%d", tokenSupplies[i])
 		}
 	}
 	for i, price := range tokenPrices {
@@ -1119,12 +1290,16 @@ func GetCollectibleDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := models.GetCollectibleDetailsResponse{
+		Name:              name,
+		Address:           address,
 		Description:       description,
 		PointsContract:    pointsContract,
 		TokenIDs:          tokenIDStrings,
 		TokenPrices:       tokenPriceStrings,
 		TokenExpiries:     tokenExpiries,
 		TokenDescriptions: tokenDescriptions,
+		TokenBalances:     tokenBalanceStrings,
+		TokenSupplies:     tokenSupplyStrings,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1132,6 +1307,7 @@ func GetCollectibleDetailsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // IsCollectibleValidHandler godoc
+//
 //	@Summary		Check collectible validity
 //	@Description	Check if a collectible token is valid (not expired)
 //	@Tags			collectibles
@@ -1168,7 +1344,9 @@ func IsCollectibleValidHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract address and tokenId from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 5 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing required path parameters",
+		}, http.StatusBadRequest)
 		return
 	}
 	address := parts[2]
@@ -1176,14 +1354,19 @@ func IsCollectibleValidHandler(w http.ResponseWriter, r *http.Request) {
 
 	tokenId, ok := new(big.Int).SetString(tokenIdStr, 0)
 	if !ok {
-		http.Error(w, "Invalid tokenId format", http.StatusBadRequest)
+		WriteError(w, "Invalid token ID", ValidationError, map[string]string{
+			"reason":  "Token ID must be a valid number",
+			"tokenId": tokenIdStr,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	isValid, err := infinirewards.IsValid(ctx, address, tokenId)
 	if err != nil {
-		logs.Logger.Error("IsCollectibleValidHandler validation error", "error", err)
-		http.Error(w, "Failed to check collectible validity", http.StatusInternalServerError)
+		WriteError(w, "Failed to check collectible validity", InternalServerError, map[string]string{
+			"reason": "Failed to check collectible validity on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -1196,6 +1379,7 @@ func IsCollectibleValidHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // PurchaseCollectibleHandler godoc
+//
 //	@Summary		Purchase collectible
 //	@Description	Purchase a collectible token using points
 //	@Tags			collectibles
@@ -1255,21 +1439,27 @@ func PurchaseCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Extract address from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 4 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing required path parameters",
+		}, http.StatusBadRequest)
 		return
 	}
 	address := parts[2]
 
 	var purchaseReq models.PurchaseCollectibleRequest
 	if err := json.NewDecoder(r.Body).Decode(&purchaseReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
@@ -1278,28 +1468,37 @@ func PurchaseCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 
 	tokenId, ok := new(big.Int).SetString(purchaseReq.TokenId, 0)
 	if !ok {
-		http.Error(w, "Invalid tokenId format", http.StatusBadRequest)
+		WriteError(w, "Invalid token ID", ValidationError, map[string]string{
+			"reason":  "Token ID must be a valid number",
+			"tokenId": purchaseReq.TokenId,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	amount, ok := new(big.Int).SetString(purchaseReq.Amount, 0)
 	if !ok {
-		http.Error(w, "Invalid amount format", http.StatusBadRequest)
+		WriteError(w, "Invalid amount format", ValidationError, map[string]string{
+			"reason": "Amount must be a valid number",
+			"amount": purchaseReq.Amount,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	// Use user's credentials from database
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, user.AccountAddress)
 	if err != nil {
-		logs.Logger.Error("PurchaseCollectibleHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -1312,8 +1511,10 @@ func PurchaseCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 		amount,
 	)
 	if err != nil {
-		logs.Logger.Error("PurchaseCollectibleHandler purchase error", "error", err)
-		http.Error(w, "Failed to purchase collectible", http.StatusInternalServerError)
+		WriteError(w, "Failed to purchase collectible", InternalServerError, map[string]string{
+			"reason": "Failed to purchase collectible on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 

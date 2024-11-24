@@ -19,6 +19,7 @@ import (
 )
 
 // InvokeTransactionMaster invokes a transaction on the master account
+//
 //	@param		contractAddressStr:		The	address		of	the	contract
 //	@param		functionSelectorStr:	The	selector	of	the	function
 //	@param		calldata:				The	calldata	of	the	function
@@ -33,6 +34,9 @@ func InvokeTransactionMaster(contractAddressStr string, functionSelectorStr stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to get nonce: %w", err)
 	}
+
+	fmt.Println("nonce", nonce)
+	fmt.Println("master account address", masterAccnt.AccountAddress)
 
 	// Build the InvokeTx struct
 	invokeTx := rpc.InvokeTxnV3{
@@ -105,6 +109,7 @@ func InvokeTransactionMaster(contractAddressStr string, functionSelectorStr stri
 }
 
 // InvokeTransaction invokes a transaction on an account
+//
 //	@param		account:				The	account		of	the	user
 //	@param		contractAddressStr:		The	address		of	the	contract
 //	@param		functionSelectorStr:	The	selector	of	the	function
@@ -204,6 +209,7 @@ func SignInvokeTransaction(ctx context.Context, account *account.Account, invoke
 }
 
 // waitForTransaction waits for a transaction to be accepted
+//
 //	@param		txHash:		The	hash	of		the	transaction
 //	@param		maxRetries:	The	maximum	number	of	retries
 //	@return:	The transaction status and an error
@@ -241,6 +247,7 @@ func waitForTransaction(txHash *felt.Felt, maxRetries int) (*rpc.TxnStatusResp, 
 }
 
 // GetAccount gets an account
+//
 //	@param		provider:		The	provider
 //	@param		privateKey:		The	private	key	of	the	account
 //	@param		accountAddress:	The	address	of	the	account
@@ -266,6 +273,7 @@ func GetAccount(privateKey string, publicKey string, accountAddress string) (*ac
 }
 
 // CallContract calls a contract
+//
 //	@param		ctx:					The	context
 //	@param		contractAddress:		The	address		of	the	contract
 //	@param		functionSelectorStr:	The	selector	of	the	function
@@ -367,6 +375,32 @@ func FundAccount(address string) (string, error) {
 	return resp.TransactionHash.String(), nil
 }
 
+// UpgradeContract upgrades a proxy contract to a new implementation
+//
+// @param ctx:              The context
+// @param account:          The account
+// @param contractAddressStr: The address of the proxy contract to upgrade
+// @param newClassHashStr:    The address of the new implementation contract
+// @return:                   Transaction hash and error
+func UpgradeContract(ctx context.Context, account *account.Account, contractAddressStr string, newClassHashStr string) (string, error) {
+
+	newImplementation, err := HexToFelt(newClassHashStr)
+	if err != nil {
+		return "", err
+	}
+
+	// Prepare calldata with new implementation address
+	calldata := []*felt.Felt{newImplementation}
+
+	// Execute the upgrade transaction
+	resp, err := InvokeTransaction(account, contractAddressStr, "upgrade", calldata)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute upgrade transaction: %w", err)
+	}
+
+	return resp.TransactionHash.String(), nil
+}
+
 // PadZerosInFelt pads zeros to the left of a hex felt value to make it 64 characters long.
 func PadZerosInFelt(hexFelt *felt.Felt) string {
 	length := 66
@@ -388,6 +422,7 @@ func PadZerosInFelt(hexFelt *felt.Felt) string {
 }
 
 // HexToFelt converts a hex string to a felt
+//
 //	@param		hexStr:	The	hex	string
 //	@return:	The felt and an error
 func HexToFelt(hexStr string) (*felt.Felt, error) {
@@ -395,6 +430,7 @@ func HexToFelt(hexStr string) (*felt.Felt, error) {
 }
 
 // StrToFelt converts a string to a felt
+//
 //	@param		s:	The	string
 //	@return:	The felt and an error
 func StrToFelt(s string) (*felt.Felt, error) {
@@ -402,6 +438,7 @@ func StrToFelt(s string) (*felt.Felt, error) {
 }
 
 // PanicRPC panics on an RPC error
+//
 //	@param		err:	The	error
 //	@return:	The error
 func PanicRPC(err error) error {

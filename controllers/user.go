@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"infinirewards/infinirewards"
 	"infinirewards/logs"
 	"infinirewards/middleware"
@@ -15,6 +14,7 @@ import (
 )
 
 // UserGetUserHandler godoc
+//
 //	@Summary		Get user details
 //	@Description	Get authenticated user details
 //	@Tags			user
@@ -46,7 +46,9 @@ func UserGetUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context instead of URL
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
@@ -54,7 +56,10 @@ func UserGetUserHandler(w http.ResponseWriter, r *http.Request) {
 	err = user.GetUser(ctx, userID)
 	if err != nil {
 		logs.Logger.Error("userGetUserHandler Failed to get user", "error", err, "userId", userID)
-		http.Error(w, "Failed to get user", http.StatusUnauthorized)
+		WriteError(w, "User not found", NotFoundError, map[string]string{
+			"reason": "User does not exist",
+			"userId": userID,
+		}, http.StatusNotFound)
 		return
 	}
 
@@ -66,6 +71,7 @@ func UserGetUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserCreateUserHandler godoc
+//
 //	@Summary		Create user
 //	@Description	Create a new user
 //	@Tags			user
@@ -116,29 +122,39 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	var createUserRequest models.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequest); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	if err := createUserRequest.Validate(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		WriteError(w, "Validation failed", ValidationError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusBadRequest)
 		return
 	}
 
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "error getting user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	if user.PrivateKey != "" {
-		http.Error(w, "user already created", http.StatusConflict)
+		WriteError(w, "User already exists", ConflictError, map[string]string{
+			"reason": "User has already been created",
+		}, http.StatusConflict)
 		return
 	}
 
@@ -147,14 +163,18 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	_, addr, err := infinirewards.CreateUser(publicKey.String(), user.PhoneNumber)
 	if err != nil {
 		logs.Logger.Error("userCreateUserHandler Failed to generate keys", "error", err)
-		http.Error(w, "Failed to generate keys", http.StatusInternalServerError)
+		WriteError(w, "Failed to generate keys", InternalServerError, map[string]string{
+			"reason": "Failed to generate blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	_, err = infinirewards.FundAccount(addr)
 	if err != nil {
 		logs.Logger.Error("userCreateUserHandler Failed to fund account", "error", err)
-		http.Error(w, "Failed to fund account", http.StatusInternalServerError)
+		WriteError(w, "Failed to fund account", InternalServerError, map[string]string{
+			"reason": "Failed to fund blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -170,7 +190,9 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	err = user.UpdateUser(ctx)
 	if err != nil {
 		logs.Logger.Error("userCreateUserHandler Failed to create user", "error", err)
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		WriteError(w, "Failed to create user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -183,6 +205,7 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserUpdateUserHandler godoc
+//
 //	@Summary		Update user
 //	@Description	Update authenticated user details
 //	@Tags			user
@@ -224,24 +247,33 @@ func UserUpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	var updateUserRequest models.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&updateUserRequest); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	if err := updateUserRequest.Validate(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		WriteError(w, "Validation failed", ValidationError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusBadRequest)
 		return
 	}
 
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "User not found", NotFoundError, map[string]string{
+			"reason": "User does not exist",
+			"userId": userID,
+		}, http.StatusNotFound)
 		return
 	}
 
@@ -252,7 +284,9 @@ func UserUpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	user.UpdatedAt = time.Now()
 
 	if err := user.UpdateUser(ctx); err != nil {
-		http.Error(w, "Failed to update user", http.StatusInternalServerError)
+		WriteError(w, "Failed to update user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -264,6 +298,7 @@ func UserUpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserDeleteUserHandler godoc
+//
 //	@Summary		Delete user
 //	@Description	Delete authenticated user
 //	@Tags			user
@@ -282,28 +317,49 @@ func UserDeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusUnauthorized)
+		WriteError(w, "User not found", NotFoundError, map[string]string{
+			"reason": "User does not exist",
+			"userId": userID,
+		}, http.StatusNotFound)
 		return
 	}
 
+	// Check and delete merchant if exists
+	merchant := &models.Merchant{}
+	if err := merchant.GetMerchant(ctx, userID); err == nil {
+		// Merchant exists, delete it
+		if err := merchant.DeleteMerchant(ctx); err != nil {
+			WriteError(w, "Failed to delete merchant", InternalServerError, map[string]string{
+				"reason": "Failed to delete associated merchant account",
+			}, http.StatusInternalServerError)
+			return
+		}
+		logs.Logger.Info("Deleted associated merchant account", "userId", userID)
+	}
+
 	if err := user.DeleteUser(ctx); err != nil {
-		http.Error(w, "Failed to delete user", http.StatusInternalServerError)
+		WriteError(w, "Failed to delete user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(models.MessageResponse{
-		Message: "User deleted successfully",
+		Message: "User and associated accounts deleted successfully",
 	})
 }
 
 // UserCreateAPIKeyHandler godoc
+//
 //	@Summary		Create API key
 //	@Description	Create a new API key for authenticated user
 //	@Tags			api-keys
@@ -338,24 +394,32 @@ func UserCreateAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	var createRequest models.CreateAPIKeyRequest
 	if err := json.NewDecoder(r.Body).Decode(&createRequest); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	if err := createRequest.Validate(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		WriteError(w, "Validation failed", ValidationError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusBadRequest)
 		return
 	}
 
 	apiKey, err := models.CreateAPIKey(ctx, userID, createRequest.Name)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to create API key: %v", err), http.StatusInternalServerError)
+		WriteError(w, "Failed to create API key", InternalServerError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -365,6 +429,7 @@ func UserCreateAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserListAPIKeysHandler godoc
+//
 //	@Summary		List API keys
 //	@Description	List all API keys for authenticated user
 //	@Tags			api-keys
@@ -392,13 +457,17 @@ func UserListAPIKeysHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	apiKeys, err := models.ListAPIKeys(ctx, userID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to list API keys: %v", err), http.StatusInternalServerError)
+		WriteError(w, "Failed to list API keys", InternalServerError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -407,6 +476,7 @@ func UserListAPIKeysHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserDeleteAPIKeyHandler godoc
+//
 //	@Summary		Delete API key
 //	@Description	Delete an API key for authenticated user
 //	@Tags			api-keys
@@ -442,14 +512,18 @@ func UserDeleteAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Extract keyId from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 2 {
-		http.Error(w, "invalid URL format", http.StatusBadRequest)
+		WriteError(w, "Invalid URL format", ValidationError, map[string]string{
+			"reason": "Missing key ID in URL path",
+		}, http.StatusBadRequest)
 		return
 	}
 	keyID := parts[len(parts)-1]
@@ -457,12 +531,16 @@ func UserDeleteAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 	// Verify the API key belongs to the user
 	keyUserID := strings.Split(keyID, ".")[0]
 	if keyUserID != userID {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthorizationError, map[string]string{
+			"reason": "API key does not belong to user",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	if err := models.DeleteAPIKey(ctx, keyID); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to delete API key: %v", err), http.StatusInternalServerError)
+		WriteError(w, "Failed to delete API key", InternalServerError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -470,4 +548,80 @@ func UserDeleteAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(models.MessageResponse{
 		Message: "API key deleted successfully",
 	})
+}
+
+// UserUpgradeContractHandler godoc
+//
+//	@Summary		Upgrade User Contract
+//	@Description	Upgrade a user contract
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		models.UpgradeUserContractRequest	true	"Upgrade User Contract Request"
+//	@Success		200		{object}	models.UpgradeUserContractResponse
+//	@Failure		400		{string}	string	"Bad Request"
+//	@Failure		401		{string}	string	"Unauthorized"
+//	@Failure		500		{string}	string	"Internal Server Error"
+//	@Router			/user/upgrade [post]
+func UpgradeUserContractHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logs.Logger.Info("UpgradeUserContractHandler called", "method", r.Method)
+
+	var upgradeRequest models.UpgradeUserContractRequest
+	if err := json.NewDecoder(r.Body).Decode(&upgradeRequest); err != nil {
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
+		return
+	}
+
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
+		return
+	}
+
+	// Get user details
+	user := &models.User{}
+	if err := user.GetUser(ctx, userID); err != nil {
+		WriteError(w, "User not found", NotFoundError, map[string]string{
+			"reason": "User does not exist",
+		}, http.StatusNotFound)
+		return
+	}
+
+	// Get account for transaction
+	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, user.AccountAddress)
+	if err != nil {
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	// Execute upgrade transaction
+	txHash, err := infinirewards.UpgradeContract(
+		ctx,
+		account,
+		user.AccountAddress,
+		upgradeRequest.NewClassHash,
+	)
+	if err != nil {
+		WriteError(w, "Failed to upgrade contract", InternalServerError, map[string]string{
+			"reason": "Failed to upgrade contract on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	resp := models.UpgradeUserContractResponse{
+		TransactionHash: txHash,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }

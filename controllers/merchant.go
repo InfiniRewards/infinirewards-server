@@ -15,6 +15,7 @@ import (
 // Factory-related handlers
 
 // CreateMerchantHandler godoc
+//
 //	@Summary		Create new merchant
 //	@Description	Create a new merchant account with initial points contract
 //	@Tags			merchants
@@ -60,19 +61,25 @@ func CreateMerchantHandler(w http.ResponseWriter, r *http.Request) {
 
 	var createReq models.CreateMerchantRequest
 	if err := json.NewDecoder(r.Body).Decode(&createReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -85,14 +92,20 @@ func CreateMerchantHandler(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		logs.Logger.Error("CreateMerchantHandler create error", "error", err)
-		http.Error(w, fmt.Sprintf("Failed to create merchant: %v", err), http.StatusInternalServerError)
+		WriteError(w, "Failed to create merchant", InternalServerError, map[string]string{
+			"reason": "Failed to create merchant on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	_, err = infinirewards.FundAccount(merchantAddress)
 	if err != nil {
 		logs.Logger.Error("CreateMerchantHandler fund error", "error", err)
-		http.Error(w, "Failed to fund merchant", http.StatusInternalServerError)
+		WriteError(w, "Failed to fund merchant", InternalServerError, map[string]string{
+			"reason": "Failed to fund merchant account",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -106,7 +119,9 @@ func CreateMerchantHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := merchant.CreateMerchant(ctx, user); err != nil {
 		logs.Logger.Error("CreateMerchantHandler create error", "error", err)
-		http.Error(w, "Failed to create merchant", http.StatusInternalServerError)
+		WriteError(w, "Failed to create merchant", InternalServerError, map[string]string{
+			"reason": "Failed to store merchant data",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -122,6 +137,7 @@ func CreateMerchantHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateCollectibleHandler godoc
+//
 //	@Summary		Create collectible contract
 //	@Description	Create a new collectible contract for a merchant
 //	@Tags			merchants
@@ -177,36 +193,43 @@ func CreateCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		logs.Logger.Error("CreateCollectibleHandler failed to get user", "error", err)
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	var createReq models.CreateCollectibleRequest
 	if err := json.NewDecoder(r.Body).Decode(&createReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	merchant := &models.Merchant{}
 	if err := merchant.GetMerchant(ctx, user.ID); err != nil {
-		logs.Logger.Error("CreateCollectibleHandler failed to get merchant", "error", err)
-		http.Error(w, "Failed to get merchant", http.StatusBadRequest)
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
 		return
 	}
 
 	// Use merchant's address for account
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
 	if err != nil {
-		logs.Logger.Error("CreateCollectibleHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -216,8 +239,9 @@ func CreateCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 		createReq.Description,
 	)
 	if err != nil {
-		logs.Logger.Error("CreateCollectibleHandler create error", "error", err)
-		http.Error(w, fmt.Sprintf("Failed to create collectible: %v", err), http.StatusInternalServerError)
+		WriteError(w, "Failed to create collectible", InternalServerError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -232,6 +256,7 @@ func CreateCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreatePointsContractHandler godoc
+//
 //	@Summary		Create points contract
 //	@Description	Create an additional points contract for a merchant
 //	@Tags			merchants
@@ -279,42 +304,51 @@ func CreatePointsContractHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		logs.Logger.Error("CreatePointsContractHandler failed to get user", "error", err)
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	var createReq models.CreatePointsContractRequest
 	if err := json.NewDecoder(r.Body).Decode(&createReq); err != nil {
-		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	merchant := &models.Merchant{}
 	if err := merchant.GetMerchant(ctx, userID); err != nil {
-		logs.Logger.Error("CreatePointsContractHandler failed to get merchant", "error", err)
-		http.Error(w, "Failed to get merchant", http.StatusBadRequest)
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
 		return
 	}
 
 	// Use merchant's address for account
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
 	if err != nil {
-		logs.Logger.Error("CreatePointsContractHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	decimals, ok := new(big.Int).SetString(createReq.Decimals, 0)
 	if !ok {
-		http.Error(w, "Invalid decimals format", http.StatusBadRequest)
+		WriteError(w, "Invalid decimals format", ValidationError, map[string]string{
+			"reason": "Decimals must be a valid number",
+		}, http.StatusBadRequest)
 		return
 	}
 
@@ -327,8 +361,9 @@ func CreatePointsContractHandler(w http.ResponseWriter, r *http.Request) {
 		decimals,
 	)
 	if err != nil {
-		logs.Logger.Error("CreatePointsContractHandler create error", "error", err)
-		http.Error(w, fmt.Sprintf("Failed to create points contract: %v", err), http.StatusInternalServerError)
+		WriteError(w, "Failed to create points contract", InternalServerError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -343,6 +378,7 @@ func CreatePointsContractHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPointsContractsHandler godoc
+//
 //	@Summary		Get merchant's points contracts
 //	@Description	Get all points contracts associated with a merchant
 //	@Tags			merchants
@@ -385,21 +421,26 @@ func GetPointsContractsHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusBadRequest)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	merchant := &models.Merchant{}
 	if err := merchant.GetMerchant(ctx, userID); err != nil {
-		logs.Logger.Error("GetPointsContractsHandler failed to get merchant", "error", err)
-		http.Error(w, "Failed to get merchant", http.StatusBadRequest)
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
 		return
 	}
 
@@ -407,14 +448,18 @@ func GetPointsContractsHandler(w http.ResponseWriter, r *http.Request) {
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
 	if err != nil {
 		logs.Logger.Error("GetPointsContractsHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	contracts, err := infinirewards.GetPointsContracts(ctx, account)
 	if err != nil {
 		logs.Logger.Error("GetPointsContractsHandler contracts error", "error", err)
-		http.Error(w, "Failed to get points contracts", http.StatusInternalServerError)
+		WriteError(w, "Failed to get points contracts", InternalServerError, map[string]string{
+			"reason": "Failed to retrieve contracts from blockchain",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -425,7 +470,11 @@ func GetPointsContractsHandler(w http.ResponseWriter, r *http.Request) {
 		name, symbol, description, decimals, totalSupply, err := infinirewards.GetPointsContractDetails(ctx, addr)
 		if err != nil {
 			logs.Logger.Error("GetPointsContractsHandler details error", "error", err, "address", addr)
-			continue
+			WriteError(w, "Failed to get contract details", InternalServerError, map[string]string{
+				"reason":  "Failed to retrieve contract details",
+				"address": addr,
+			}, http.StatusInternalServerError)
+			return
 		}
 
 		contractInfos[i] = models.PointsContractInfo{
@@ -447,6 +496,7 @@ func GetPointsContractsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetCollectibleContractsHandler godoc
+//
 //	@Summary		Get merchant's collectible contracts
 //	@Description	Get all collectible contracts associated with a merchant
 //	@Tags			merchants
@@ -492,36 +542,43 @@ func GetCollectibleContractsHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	// Get user from database
 	user := &models.User{}
 	if err := user.GetUser(ctx, userID); err != nil {
-		http.Error(w, "Failed to get user", http.StatusInternalServerError)
+		WriteError(w, "Failed to get user", InternalServerError, map[string]string{
+			"reason": "Database operation failed",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	merchant := &models.Merchant{}
 	if err := merchant.GetMerchant(ctx, userID); err != nil {
-		logs.Logger.Error("GetCollectibleContractsHandler failed to get merchant", "error", err)
-		http.Error(w, "Failed to get merchant", http.StatusBadRequest)
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
 		return
 	}
 
 	// Use merchant's address for account
 	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
 	if err != nil {
-		logs.Logger.Error("GetCollectibleContractsHandler account error", "error", err)
-		http.Error(w, "Failed to get account", http.StatusInternalServerError)
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
 		return
 	}
 
 	contracts, err := infinirewards.GetCollectibleContracts(ctx, account)
 	if err != nil {
-		logs.Logger.Error("GetCollectibleContractsHandler contracts error", "error", err)
-		http.Error(w, "Failed to get collectible contracts", http.StatusInternalServerError)
+		WriteError(w, "Failed to get collectible contracts", InternalServerError, map[string]string{
+			"reason": "Failed to retrieve contracts from blockchain",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -529,46 +586,45 @@ func GetCollectibleContractsHandler(w http.ResponseWriter, r *http.Request) {
 	contractInfos := make([]models.CollectibleContractInfo, len(contracts))
 	for i, addr := range contracts {
 		// Get contract details - GetDetails returns 8 values:
-		// description, pointsContract, _, tokenIDs, tokenPrices, tokenExpiries, tokenDescriptions, err
-		description, pointsContract, tokenIDs, tokenPrices, tokenExpiries, tokenDescriptions, err := infinirewards.GetDetails(
+		// infinirewards.UpgradeContract(ctx, account, addr, "0x2fdba53f81d71a9225c30a38b30cf6231cd8cb250faaff3c975b66eb8e0915d")
+		// description, pointsContract, _, tokenIDs, tokenPrices, tokenExpiries, tokenDescriptions, tokenSupplies, err
+		name, description, pointsContract, tokenIDs, tokenPrices, tokenExpiries, tokenDescriptions, tokenSupplies, err := infinirewards.GetDetails(
 			ctx,
 			addr,
 		)
 		if err != nil {
 			logs.Logger.Error("GetCollectibleContractsHandler details error", "error", err, "address", addr)
-			continue
+			WriteError(w, "Failed to get collectible details", InternalServerError, map[string]string{
+				"reason":  "Failed to retrieve collectible details",
+				"address": addr,
+			}, http.StatusInternalServerError)
+			return
 		}
 
 		// Convert tokenIDs and tokenPrices from []*big.Int to []string
-		tokenIDStrings := make([]string, len(tokenIDs))
-		tokenPriceStrings := make([]string, len(tokenPrices))
+		tokenIDStrings := make([]string, 0)
+		tokenPriceStrings := make([]string, 0)
+		tokenSuppliesStrings := make([]string, 0)
 		for j, id := range tokenIDs {
 			if id != nil {
-				tokenIDStrings[j] = id.String()
+				if tokenPrices[j] != nil {
+					tokenIDStrings = append(tokenIDStrings, id.String())
+					tokenPriceStrings = append(tokenPriceStrings, tokenPrices[j].String())
+					tokenSuppliesStrings = append(tokenSuppliesStrings, fmt.Sprintf("%d", tokenSupplies[j]))
+				}
 			}
-		}
-		for j, price := range tokenPrices {
-			if price != nil {
-				tokenPriceStrings[j] = price.String()
-			}
-		}
-
-		// Get total supply by counting valid tokens
-		totalSupply := "0"
-		if len(tokenIDStrings) > 0 {
-			totalSupply = fmt.Sprintf("%d", len(tokenIDStrings))
 		}
 
 		contractInfos[i] = models.CollectibleContractInfo{
 			Address:           addr,
-			Name:              pointsContract, // Using pointsContract as name since GetDetails doesn't return name
+			Name:              name,
 			Description:       description,
 			PointsContract:    pointsContract,
-			TotalSupply:       totalSupply,
-			TokenTypes:        tokenIDStrings,
+			TokenIDs:          tokenIDStrings,
 			TokenPrices:       tokenPriceStrings,
 			TokenExpiries:     tokenExpiries,
 			TokenDescriptions: tokenDescriptions,
+			TokenSupplies:     tokenSuppliesStrings,
 		}
 	}
 
@@ -581,6 +637,7 @@ func GetCollectibleContractsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetMerchantHandler godoc
+//
 //	@Summary		Get merchant details
 //	@Description	Get details of a merchant
 //	@Tags			merchants
@@ -598,17 +655,276 @@ func GetMerchantHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	merchant := &models.Merchant{}
 	if err := merchant.GetMerchant(ctx, userID); err != nil {
 		logs.Logger.Error("GetMerchantHandler failed to get merchant", "error", err)
-		http.Error(w, "Failed to get merchant", http.StatusBadRequest)
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(merchant)
+}
+
+// UpgradeMerchantContractHandler godoc
+//
+//	@Summary		Upgrade merchant contract
+//	@Description	Upgrade the merchant contract
+//	@Tags			merchants
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		models.UpgradeMerchantContractRequest	true	"Upgrade Merchant Contract Request"
+//	@Success		200		{object}	models.UpgradeMerchantContractResponse
+//	@Failure		400		{string}	string	"Bad Request"
+//	@Failure		401		{string}	string	"Unauthorized"
+//	@Failure		500		{string}	string	"Internal Server Error"
+//	@Router			/merchant/upgrade [post]
+func UpgradeMerchantContractHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logs.Logger.Info("UpgradeMerchantContractHandler called", "method", r.Method)
+
+	var upgradeRequest models.UpgradeMerchantContractRequest
+	if err := json.NewDecoder(r.Body).Decode(&upgradeRequest); err != nil {
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
+		return
+	}
+
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
+		return
+	}
+
+	// Get user details
+	user := &models.User{}
+	if err := user.GetUser(ctx, userID); err != nil {
+		WriteError(w, "User not found", NotFoundError, map[string]string{
+			"reason": "User does not exist",
+		}, http.StatusNotFound)
+		return
+	}
+
+	// Get merchant details
+	merchant := &models.Merchant{}
+	if err := merchant.GetMerchant(ctx, userID); err != nil {
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
+		return
+	}
+
+	// Get account for transaction
+	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
+	if err != nil {
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	// Execute upgrade transaction
+	txHash, err := infinirewards.UpgradeContract(
+		ctx,
+		account,
+		merchant.Address,
+		upgradeRequest.NewClassHash,
+	)
+	if err != nil {
+		WriteError(w, "Failed to upgrade contract", InternalServerError, map[string]string{
+			"reason": "Failed to upgrade contract on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	resp := models.UpgradeMerchantContractResponse{
+		TransactionHash: txHash,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+// UpgradePointsContractHandler godoc
+//
+//	@Summary		Upgrade points contract
+//	@Description	Upgrade the points contract
+//	@Tags			merchants
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		models.UpgradePointsContractRequest	true	"Upgrade Points Contract Request"
+//	@Success		200		{object}	models.UpgradePointsContractResponse
+//	@Failure		400		{string}	string	"Bad Request"
+//	@Failure		401		{string}	string	"Unauthorized"
+//	@Failure		500		{string}	string	"Internal Server Error"
+//	@Router			/merchant/points/upgrade [post]
+func UpgradePointsContractHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logs.Logger.Info("UpgradePointsContractHandler called", "method", r.Method)
+
+	var upgradeRequest models.UpgradePointsContractRequest
+	if err := json.NewDecoder(r.Body).Decode(&upgradeRequest); err != nil {
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
+		return
+	}
+
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
+		return
+	}
+
+	// Get user details
+	user := &models.User{}
+	if err := user.GetUser(ctx, userID); err != nil {
+		WriteError(w, "User not found", NotFoundError, map[string]string{
+			"reason": "User does not exist",
+		}, http.StatusNotFound)
+		return
+	}
+
+	// Get merchant details
+	merchant := &models.Merchant{}
+	if err := merchant.GetMerchant(ctx, userID); err != nil {
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
+		return
+	}
+
+	// Get account for transaction
+	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
+	if err != nil {
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	// Execute upgrade transaction
+	txHash, err := infinirewards.UpgradeContract(
+		ctx,
+		account,
+		upgradeRequest.PointsContract,
+		upgradeRequest.NewClassHash,
+	)
+	if err != nil {
+		WriteError(w, "Failed to upgrade points contract", InternalServerError, map[string]string{
+			"reason": "Failed to upgrade contract on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	resp := models.UpgradePointsContractResponse{
+		TransactionHash: txHash,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+// UpgradeCollectibleContractHandler godoc
+//
+//	@Summary		Upgrade collectible contract
+//	@Description	Upgrade the collectible contract
+//	@Tags			merchants
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		models.UpgradeCollectibleContractRequest	true	"Upgrade Collectible Contract Request"
+//	@Success		200		{object}	models.UpgradeCollectibleContractResponse
+//	@Failure		400		{string}	string	"Bad Request"
+//	@Failure		401		{string}	string	"Unauthorized"
+//	@Failure		500		{string}	string	"Internal Server Error"
+//	@Router			/merchant/collectible/upgrade [post]
+func UpgradeCollectibleContractHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logs.Logger.Info("UpgradeCollectibleContractHandler called", "method", r.Method)
+
+	var upgradeRequest models.UpgradeCollectibleContractRequest
+	if err := json.NewDecoder(r.Body).Decode(&upgradeRequest); err != nil {
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
+		return
+	}
+
+	// Get user ID from context
+	userID, err := middleware.GetUserIDFromContext(ctx)
+	if err != nil {
+		WriteError(w, "Unauthorized", AuthenticationError, map[string]string{
+			"reason": "Missing or invalid authentication token",
+		}, http.StatusUnauthorized)
+		return
+	}
+
+	// Get user details
+	user := &models.User{}
+	if err := user.GetUser(ctx, userID); err != nil {
+		WriteError(w, "User not found", NotFoundError, map[string]string{
+			"reason": "User does not exist",
+		}, http.StatusNotFound)
+		return
+	}
+
+	// Get merchant details
+	merchant := &models.Merchant{}
+	if err := merchant.GetMerchant(ctx, userID); err != nil {
+		WriteError(w, "Not authorized", AuthorizationError, map[string]string{
+			"reason": "User is not a merchant",
+		}, http.StatusForbidden)
+		return
+	}
+
+	// Get account for transaction
+	account, err := infinirewards.GetAccount(user.PrivateKey, user.PublicKey, merchant.Address)
+	if err != nil {
+		WriteError(w, "Failed to get account", InternalServerError, map[string]string{
+			"reason": "Failed to get blockchain account",
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	// Execute upgrade transaction
+	txHash, err := infinirewards.UpgradeContract(
+		ctx,
+		account,
+		upgradeRequest.CollectibleAddress,
+		upgradeRequest.NewClassHash,
+	)
+	if err != nil {
+		WriteError(w, "Failed to upgrade collectible contract", InternalServerError, map[string]string{
+			"reason": "Failed to upgrade contract on blockchain",
+			"error":  err.Error(),
+		}, http.StatusInternalServerError)
+		return
+	}
+
+	resp := models.UpgradeCollectibleContractResponse{
+		TransactionHash: txHash,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }

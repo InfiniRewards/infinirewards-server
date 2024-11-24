@@ -117,6 +117,13 @@ definitions:
         items:
           type: integer
         type: array
+      tokenIds:
+        description: |-
+          TokenIDs lists all token IDs in the collection
+          example: ["1","2","3"]
+        items:
+          type: string
+        type: array
       tokenPrices:
         description: |-
           TokenPrices lists prices for each token
@@ -124,18 +131,13 @@ definitions:
         items:
           type: string
         type: array
-      tokenTypes:
+      tokenSupplies:
         description: |-
-          TokenTypes lists all token IDs in the collection
-          example: ["1","2","3"]
+          TokenSupplies lists supplies for each token
+          example: [100,200,300]
         items:
           type: string
         type: array
-      totalSupply:
-        description: |-
-          TotalSupply across all token types
-          example: 100
-        type: string
     type: object
   models.CreateAPIKeyRequest:
     properties:
@@ -267,19 +269,24 @@ definitions:
   models.CreateUserRequest:
     properties:
       avatar:
+        description: Avatar is the user's avatar
         type: string
       email:
+        description: |-
+          Email is the user's email
+          example: john.doe@example.com
         type: string
       name:
+        description: |-
+          Name is the user's name
+          example: John Doe
         type: string
     type: object
   models.ErrorResponse:
     properties:
       code:
         type: string
-      details:
-        additionalProperties: true
-        type: object
+      details: {}
       message:
         type: string
     type: object
@@ -301,9 +308,19 @@ definitions:
     type: object
   models.GetCollectibleDetailsResponse:
     properties:
+      address:
+        description: |-
+          Address of the collectible collection
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
       description:
         description: |-
           Description of the collectible collection
+          example: Special Edition Collectibles
+        type: string
+      name:
+        description: |-
+          Name of the collectible collection
           example: Special Edition Collectibles
         type: string
       pointsContract:
@@ -311,6 +328,13 @@ definitions:
           PointsContract is the address of the points contract
           example: 0x1234567890abcdef1234567890abcdef12345678
         type: string
+      tokenBalances:
+        description: |-
+          TokenBalances lists balances for each token
+          example: ["10","20","30"]
+        items:
+          type: string
+        type: array
       tokenDescriptions:
         description: |-
           TokenDescriptions lists descriptions for each token
@@ -325,7 +349,7 @@ definitions:
         items:
           type: integer
         type: array
-      tokenIDs:
+      tokenIds:
         description: |-
           TokenIDs lists all token IDs in the collection
           example: ["1","2","3"]
@@ -338,6 +362,13 @@ definitions:
           example: ["100","200","300"]
         items:
           type: string
+        type: array
+      tokenSupplies:
+        description: |-
+          TokenSupplies lists supplies for each token
+          example: [100,200,300]
+        items:
+          type: integer
         type: array
     type: object
   models.GetCollectibleURIResponse:
@@ -354,6 +385,26 @@ definitions:
         description: |-
           Balance is the number of points owned
           example: 1000
+        type: string
+      decimals:
+        description: |-
+          Decimals of the points token
+          example: 18
+        type: integer
+      description:
+        description: |-
+          Description of the points token
+          example: Premium points for our most loyal customers
+        type: string
+      name:
+        description: |-
+          Name of the points token
+          example: Premium Points
+        type: string
+      symbol:
+        description: |-
+          Symbol of the points token
+          example: PPM
         type: string
     type: object
   models.GetPointsContractsResponse:
@@ -700,36 +751,132 @@ definitions:
   models.UpdateUserRequest:
     properties:
       avatar:
+        description: Avatar is the user's avatar
         type: string
       email:
+        description: |-
+          Email is the user's email
+          example: john.doe@example.com
         type: string
       name:
+        description: |-
+          Name is the user's name
+          example: John Doe
+        type: string
+    type: object
+  models.UpgradeCollectibleContractRequest:
+    properties:
+      collectibleAddress:
+        description: |-
+          CollectibleAddress is the address of the collectible contract to upgrade
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      newClassHash:
+        description: |-
+          NewClassHash is the class hash of the new implementation contract
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.UpgradeCollectibleContractResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the upgrade transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.UpgradeMerchantContractRequest:
+    properties:
+      newClassHash:
+        description: |-
+          NewClassHash is the class hash of the new implementation contract
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.UpgradeMerchantContractResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the upgrade transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.UpgradePointsContractRequest:
+    properties:
+      newClassHash:
+        description: |-
+          NewClassHash is the class hash of the new implementation contract
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+      pointsContract:
+        description: |-
+          PointsContract is the address of the points contract to upgrade
+          example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+    type: object
+  models.UpgradePointsContractResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the upgrade transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.UpgradeUserContractRequest:
+    properties:
+      newClassHash:
+        description: |-
+          NewClassHash is the class hash of the new implementation contract
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.UpgradeUserContractResponse:
+    properties:
+      transactionHash:
+        description: |-
+          TransactionHash is the hash of the upgrade transaction
+          example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
         type: string
     type: object
   models.User:
     properties:
       accountAddress:
-        description: StarkNet account address
+        description: AccountAddress is the user's StarkNet account address
         type: string
       avatar:
+        description: Avatar is the user's avatar
         type: string
       createdAt:
+        description: CreatedAt is the time the user was created
         type: string
       email:
+        description: |-
+          Email is the user's email
+          example: john.doe@example.com
         type: string
       id:
+        description: |-
+          ID is the user's ID
+          example: 0x1234567890abcdef1234567890abcdef12345678
         type: string
       name:
+        description: |-
+          Name is the user's name
+          example: John Doe
         type: string
       phoneNumber:
+        description: |-
+          PhoneNumber is the user's phone number
+          example: 1234567890
         type: string
       privateKey:
-        description: StarkNet private key
+        description: PrivateKey is the user's StarkNet private key
         type: string
       publicKey:
-        description: StarkNet public key
+        description: PublicKey is the user's StarkNet public key
         type: string
       updatedAt:
+        description: UpdatedAt is the time the user was last updated
         type: string
     type: object
 host: localhost:8080
@@ -1210,46 +1357,6 @@ paths:
       summary: Check collectible validity
       tags:
       - collectibles
-  /collectibles/mint:
-    post:
-      consumes:
-      - application/json
-      description: Mint new collectible tokens for a specified recipient
-      parameters:
-      - description: Mint Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/models.MintCollectibleRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Mint successful
-          schema:
-            $ref: '#/definitions/models.MintCollectibleResponse'
-        "400":
-          description: Invalid request format or validation failed
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: Missing or invalid authentication token
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "403":
-          description: Insufficient permissions to mint
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Mint collectible tokens
-      tags:
-      - collectibles
   /merchant:
     get:
       consumes:
@@ -1341,6 +1448,42 @@ paths:
       summary: Get merchant's collectible contracts
       tags:
       - merchants
+  /merchant/collectible/upgrade:
+    post:
+      consumes:
+      - application/json
+      description: Upgrade the collectible contract
+      parameters:
+      - description: Upgrade Collectible Contract Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpgradeCollectibleContractRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpgradeCollectibleContractResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Upgrade collectible contract
+      tags:
+      - merchants
   /merchant/collectibles:
     post:
       consumes:
@@ -1381,6 +1524,46 @@ paths:
       summary: Create collectible contract
       tags:
       - merchants
+  /merchant/collectibles/mint:
+    post:
+      consumes:
+      - application/json
+      description: Mint new collectible tokens for a specified recipient
+      parameters:
+      - description: Mint Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.MintCollectibleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Mint successful
+          schema:
+            $ref: '#/definitions/models.MintCollectibleResponse'
+        "400":
+          description: Invalid request format or validation failed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Missing or invalid authentication token
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Insufficient permissions to mint
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mint collectible tokens
+      tags:
+      - collectibles
   /merchant/points:
     post:
       consumes:
@@ -1448,6 +1631,78 @@ paths:
       security:
       - BearerAuth: []
       summary: Get merchant's points contracts
+      tags:
+      - merchants
+  /merchant/points/upgrade:
+    post:
+      consumes:
+      - application/json
+      description: Upgrade the points contract
+      parameters:
+      - description: Upgrade Points Contract Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpgradePointsContractRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpgradePointsContractResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Upgrade points contract
+      tags:
+      - merchants
+  /merchant/upgrade:
+    post:
+      consumes:
+      - application/json
+      description: Upgrade the merchant contract
+      parameters:
+      - description: Upgrade Merchant Contract Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpgradeMerchantContractRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpgradeMerchantContractResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Upgrade merchant contract
       tags:
       - merchants
   /points/{address}/balance:
@@ -1831,6 +2086,42 @@ paths:
       summary: Delete API key
       tags:
       - api-keys
+  /user/upgrade:
+    post:
+      consumes:
+      - application/json
+      description: Upgrade a user contract
+      parameters:
+      - description: Upgrade User Contract Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpgradeUserContractRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UpgradeUserContractResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Upgrade User Contract
+      tags:
+      - user
 schemes:
 - http
 - https

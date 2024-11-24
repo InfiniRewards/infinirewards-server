@@ -6,8 +6,10 @@ import (
 	"infinirewards/infinirewards"
 	"infinirewards/jwt"
 	"infinirewards/logs"
+	"infinirewards/nats"
 	"infinirewards/routes"
 	"infinirewards/utils"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -39,6 +41,41 @@ import (
 //	@description				Enter your bearer token in the format **Bearer <token>**
 
 //	@x-extension-openapi	{"example": "value on a json format"}
+
+// Create a CORS middleware handler
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*") // Consider restricting this in production
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Max-Age", "3600")
+
+		// Handle preflight requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		// Pass to next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+type slogWriter struct {
+	logger *slog.Logger
+}
+
+func (w *slogWriter) Write(p []byte) (n int, err error) {
+	// Remove trailing newline if present
+	msg := string(p)
+	if len(msg) > 0 && msg[len(msg)-1] == '\n' {
+		msg = msg[:len(msg)-1]
+	}
+
+	w.logger.Error(msg)
+	return len(p), nil
+}
 
 func main() {
 	// Initialize logger
@@ -83,6 +120,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := nats.ConnectNats(); err != nil {
+		logs.Logger.Error("failed to connect to NATS",
+			slog.String("handler", "main"),
+			slog.String("error", err.Error()),
+		)
+		os.Exit(1)
+	}
+
 	// Create new ServeMux
 	mux := http.NewServeMux()
 
@@ -102,10 +147,21 @@ func main() {
 		))
 	}
 
-	// Create server
+	// Create server with proper error logging
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: mux,
+		Handler: corsMiddleware(mux),
+		ErrorLog: log.New(
+			&slogWriter{
+				logger: logs.Logger.WithGroup("server"),
+			},
+			"", // No prefix
+			0,  // No flags since we handle formatting in slog
+		), // Use existing logger
+		// Add reasonable timeouts
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	// Start server in goroutine

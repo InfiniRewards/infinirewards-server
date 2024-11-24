@@ -223,7 +223,7 @@ func CreateToken(userID string) (string, error) {
 		Subject:   userID,
 		Issuer:    "infinirewards",
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		Expiry:    jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		Expiry:    jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
 		NotBefore: jwt.NewNumericDate(time.Now()),
 		Audience:  jwt.Audience{"infinirewards"},
 	}
@@ -270,7 +270,22 @@ func GetRandomActiveKey() *KeyPair {
 	}
 
 	if len(validKeys) == 0 {
-		return nil
+		// If no valid keys, trigger key rotation and try again
+		if err := performKeyRotation(); err != nil {
+			slog.Error("Failed to rotate keys when no valid keys found",
+				slog.String("error", err.Error()),
+			)
+			return nil
+		}
+		// Try getting valid keys again after rotation
+		for _, key := range activeKeys {
+			if time.Since(key.CreatedAt) < keyRotationAge {
+				validKeys = append(validKeys, key)
+			}
+		}
+		if len(validKeys) == 0 {
+			return nil // Still no valid keys after rotation
+		}
 	}
 
 	return validKeys[rand.Intn(len(validKeys))]

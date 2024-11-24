@@ -8,20 +8,6 @@ import (
 
 func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	// Collectible endpoints
-	//	@Summary		Mint Collectible
-	//	@Description	Mint new collectible tokens
-	//	@Tags			collectibles
-	//	@Accept			json
-	//	@Produce		json
-	//	@Security		BearerAuth
-	//	@Param			request	body		models.MintCollectibleRequest	true	"Mint Request"
-	//	@Success		200		{object}	models.MintCollectibleResponse
-	//	@Failure		400		{string}	string	"Bad Request"
-	//	@Failure		401		{string}	string	"Unauthorized"
-	//	@Failure		500		{string}	string	"Internal Server Error"
-	//	@Router			/collectibles/mint [post]
-	mux.HandleFunc("POST /collectibles/mint", middleware.AuthMiddleware(controllers.MintCollectibleHandler))
-
 	//	@Summary		Get Collectible Balance
 	//	@Description	Get balance of collectible tokens
 	//	@Tags			collectibles
@@ -90,6 +76,19 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	//	@Failure		500		{string}	string	"Internal Server Error"
 	//	@Router			/collectibles/{address}/token-data/{tokenId} [get]
 	mux.HandleFunc("GET /collectibles/{address}/token-data/{tokenId}", controllers.GetTokenDataHandler)
+
+	//	@Summary		Get Collectible Details
+	//	@Description	Get details for collectible token
+	//	@Tags			collectibles
+	//	@Accept			json
+	//	@Produce		json
+	//	@Param			address	path		string	true	"Contract Address"
+	//	@Param			tokenId	path		string	true	"Token ID"
+	//	@Success		200		{object}	models.GetCollectibleDetailsResponse
+	//	@Failure		400		{string}	string	"Bad Request"
+	//	@Failure		500		{string}	string	"Internal Server Error"
+	//	@Router			/collectibles/{address} [get]
+	mux.HandleFunc("GET /collectibles/{address}", middleware.AuthMiddleware(controllers.GetCollectibleDetailsHandler))
 
 	//	@Summary		Redeem Collectible
 	//	@Description	Redeem collectible tokens
@@ -175,6 +174,20 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	//	@Router			/merchant/points-contracts [get]
 	mux.HandleFunc("GET /merchant/points-contracts", middleware.AuthMiddleware(controllers.GetPointsContractsHandler))
 
+	//	@Summary		Mint Collectible
+	//	@Description	Mint new collectible tokens
+	//	@Tags			collectibles
+	//	@Accept			json
+	//	@Produce		json
+	//	@Security		BearerAuth
+	//	@Param			request	body		models.MintCollectibleRequest	true	"Mint Request"
+	//	@Success		200		{object}	models.MintCollectibleResponse
+	//	@Failure		400		{string}	string	"Bad Request"
+	//	@Failure		401		{string}	string	"Unauthorized"
+	//	@Failure		500		{string}	string	"Internal Server Error"
+	//	@Router			/merchant/collectibles/mint [post]
+	mux.HandleFunc("POST /merchant/collectibles/mint", middleware.AuthMiddleware(controllers.MintCollectibleHandler))
+
 	//	@Summary		Get Collectible Contracts
 	//	@Description	Get merchant's collectible contracts
 	//	@Tags			merchants
@@ -211,8 +224,8 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	//	@Failure		400		{string}	string	"Bad Request"
 	//	@Failure		401		{string}	string	"Unauthorized"
 	//	@Failure		500		{string}	string	"Internal Server Error"
-	//	@Router			/collectibles [post]
-	mux.HandleFunc("POST /collectibles", middleware.AuthMiddleware(controllers.CreateCollectibleHandler))
+	//	@Router			/merchant/collectibles [post]
+	mux.HandleFunc("POST /merchant/collectibles", middleware.AuthMiddleware(controllers.CreateCollectibleHandler))
 
 	//	@Summary		Create Points Contract
 	//	@Description	Create a new points contract
@@ -225,6 +238,48 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	//	@Failure		400		{string}	string	"Bad Request"
 	//	@Failure		401		{string}	string	"Unauthorized"
 	//	@Failure		500		{string}	string	"Internal Server Error"
-	//	@Router			/points-contracts [post]
-	mux.HandleFunc("POST /points-contracts", middleware.AuthMiddleware(controllers.CreatePointsContractHandler))
+	//	@Router			/merchant/points-contracts [post]
+	mux.HandleFunc("POST /merchant/points-contracts", middleware.AuthMiddleware(controllers.CreatePointsContractHandler))
+
+	//	@Summary		Upgrade Points Contract
+	//	@Description	Upgrade a points contract
+	//	@Tags			factory
+	//	@Accept			json
+	//	@Produce		json
+	//	@Security		BearerAuth
+	//	@Param			address	path		string	true	"Contract Address"
+	//	@Success		200		{object}	models.UpgradePointsContractResponse
+	//	@Failure		400		{string}	string	"Bad Request"
+	//	@Failure		401		{string}	string	"Unauthorized"
+	//	@Failure		500		{string}	string	"Internal Server Error"
+	//	@Router			/merchant/points/upgrade [post]
+	mux.HandleFunc("POST /merchant/points/upgrade", middleware.AuthMiddleware(controllers.UpgradePointsContractHandler))
+
+	//	@Summary		Upgrade Collectible Contract
+	//	@Description	Upgrade a collectible contract
+	//	@Tags			factory
+	//	@Accept			json
+	//	@Produce		json
+	//	@Security		BearerAuth
+	//	@Param			address	path		string	true	"Contract Address"
+	//	@Success		200		{object}	models.UpgradeCollectibleContractResponse
+	//	@Failure		400		{string}	string	"Bad Request"
+	//	@Failure		401		{string}	string	"Unauthorized"
+	//	@Failure		500		{string}	string	"Internal Server Error"
+	//	@Router			/merchant/collectible/upgrade [post]
+	mux.HandleFunc("POST /merchant/collectible/upgrade", middleware.AuthMiddleware(controllers.UpgradeCollectibleContractHandler))
+
+	//	@Summary		Upgrade Merchant Contract
+	//	@Description	Upgrade a merchant contract
+	//	@Tags			factory
+	//	@Accept			json
+	//	@Produce		json
+	//	@Security		BearerAuth
+	//	@Param			address	path		string	true	"Contract Address"
+	//	@Success		200		{object}	models.UpgradeMerchantContractResponse
+	//	@Failure		400		{string}	string	"Bad Request"
+	//	@Failure		401		{string}	string	"Unauthorized"
+	//	@Failure		500		{string}	string	"Internal Server Error"
+	//	@Router			/merchant/upgrade [post]
+	mux.HandleFunc("POST /merchant/upgrade", middleware.AuthMiddleware(controllers.UpgradeMerchantContractHandler))
 }

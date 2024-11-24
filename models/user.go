@@ -10,30 +10,83 @@ import (
 	"time"
 )
 
+// CreateUserRequest represents the request for creating a user
 type CreateUserRequest struct {
-	Email  string `json:"email"`
-	Name   string `json:"name"`
+	// Email is the user's email
+	// example: john.doe@example.com
+	Email string `json:"email"`
+
+	// Name is the user's name
+	// example: John Doe
+	Name string `json:"name"`
+
+	// Avatar is the user's avatar
 	Avatar string `json:"avatar"`
 }
 
+// UpdateUserRequest represents the request for updating a user
 type UpdateUserRequest struct {
-	Email  string `json:"email"`
-	Name   string `json:"name"`
+	// Email is the user's email
+	// example: john.doe@example.com
+	Email string `json:"email"`
+
+	// Name is the user's name
+	// example: John Doe
+	Name string `json:"name"`
+
+	// Avatar is the user's avatar
 	Avatar string `json:"avatar"`
+}
+
+// UpgradeUserContractRequest represents the request for upgrading a user contract
+type UpgradeUserContractRequest struct {
+	// NewClassHash is the class hash of the new implementation contract
+	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+	NewClassHash string `json:"newClassHash"`
+}
+
+// UpgradeUserContractResponse represents the response for upgrading a user contract
+type UpgradeUserContractResponse struct {
+	// TransactionHash is the hash of the upgrade transaction
+	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+	TransactionHash string `json:"transactionHash"`
 }
 
 // User represents a user in the InfiniRewards system.
 type User struct {
-	ID             string    `json:"id"`
-	PhoneNumber    string    `json:"phoneNumber"`
-	Email          string    `json:"email"`
-	Name           string    `json:"name"`
-	Avatar         string    `json:"avatar"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
-	PublicKey      string    `json:"publicKey"`      // StarkNet public key
-	PrivateKey     string    `json:"privateKey"`     // StarkNet private key
-	AccountAddress string    `json:"accountAddress"` // StarkNet account address
+	// ID is the user's ID
+	// example: 0x1234567890abcdef1234567890abcdef12345678
+	ID string `json:"id"`
+
+	// PhoneNumber is the user's phone number
+	// example: 1234567890
+	PhoneNumber string `json:"phoneNumber"`
+
+	// Email is the user's email
+	// example: john.doe@example.com
+	Email string `json:"email"`
+
+	// Name is the user's name
+	// example: John Doe
+	Name string `json:"name"`
+
+	// Avatar is the user's avatar
+	Avatar string `json:"avatar"`
+
+	// CreatedAt is the time the user was created
+	CreatedAt time.Time `json:"createdAt"`
+
+	// UpdatedAt is the time the user was last updated
+	UpdatedAt time.Time `json:"updatedAt"`
+
+	// PublicKey is the user's StarkNet public key
+	PublicKey string `json:"publicKey"`
+
+	// PrivateKey is the user's StarkNet private key
+	PrivateKey string `json:"privateKey"`
+
+	// AccountAddress is the user's StarkNet account address
+	AccountAddress string `json:"accountAddress"`
 }
 
 const (

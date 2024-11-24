@@ -246,13 +246,9 @@ type CollectibleContractInfo struct {
 	// example: 0x1234567890abcdef1234567890abcdef12345678
 	PointsContract string `json:"pointsContract"`
 
-	// TotalSupply across all token types
-	// example: 100
-	TotalSupply string `json:"totalSupply"`
-
-	// TokenTypes lists all token IDs in the collection
+	// TokenIDs lists all token IDs in the collection
 	// example: ["1","2","3"]
-	TokenTypes []string `json:"tokenTypes"`
+	TokenIDs []string `json:"tokenIds"`
 
 	// TokenPrices lists prices for each token
 	// example: ["100","200","300"]
@@ -265,6 +261,10 @@ type CollectibleContractInfo struct {
 	// TokenDescriptions lists descriptions for each token
 	// example: ["Gold","Silver","Bronze"]
 	TokenDescriptions []string `json:"tokenDescriptions"`
+
+	// TokenSupplies lists supplies for each token
+	// example: [100,200,300]
+	TokenSupplies []string `json:"tokenSupplies"`
 }
 
 // GetCollectibleContractsResponse represents the response listing collectible contracts
@@ -504,6 +504,14 @@ type SetTokenDataResponse struct {
 }
 
 type GetCollectibleDetailsResponse struct {
+	// Name of the collectible collection
+	// example: Special Edition Collectibles
+	Name string `json:"name"`
+
+	// Address of the collectible collection
+	// example: 0x1234567890abcdef1234567890abcdef12345678
+	Address string `json:"address"`
+
 	// Description of the collectible collection
 	// example: Special Edition Collectibles
 	Description string `json:"description"`
@@ -514,7 +522,7 @@ type GetCollectibleDetailsResponse struct {
 
 	// TokenIDs lists all token IDs in the collection
 	// example: ["1","2","3"]
-	TokenIDs []string `json:"tokenIDs"`
+	TokenIDs []string `json:"tokenIds"`
 
 	// TokenPrices lists prices for each token
 	// example: ["100","200","300"]
@@ -527,6 +535,14 @@ type GetCollectibleDetailsResponse struct {
 	// TokenDescriptions lists descriptions for each token
 	// example: ["Gold","Silver","Bronze"]
 	TokenDescriptions []string `json:"tokenDescriptions"`
+
+	// TokenBalances lists balances for each token
+	// example: ["10","20","30"]
+	TokenBalances []string `json:"tokenBalances"`
+
+	// TokenSupplies lists supplies for each token
+	// example: [100,200,300]
+	TokenSupplies []string `json:"tokenSupplies"`
 }
 
 type IsCollectibleValidResponse struct {
@@ -631,4 +647,56 @@ type GetPointsBalanceResponse struct {
 	// Balance is the number of points owned
 	// example: 1000
 	Balance string `json:"balance"`
+
+	// Name of the points token
+	// example: Premium Points
+	Name string `json:"name"`
+
+	// Symbol of the points token
+	// example: PPM
+	Symbol string `json:"symbol"`
+
+	// Decimals of the points token
+	// example: 18
+	Decimals uint64 `json:"decimals"`
+
+	// Description of the points token
+	// example: Premium points for our most loyal customers
+	Description string `json:"description"`
+}
+
+// UpgradePointsContractRequest represents the request for upgrading a points contract
+type UpgradePointsContractRequest struct {
+	// NewClassHash is the class hash of the new implementation contract
+	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+	NewClassHash string `json:"newClassHash"`
+
+	// PointsContract is the address of the points contract to upgrade
+	// example: 0x1234567890abcdef1234567890abcdef12345678
+	PointsContract string `json:"pointsContract"`
+}
+
+// UpgradePointsContractResponse represents the response for upgrading a points contract
+type UpgradePointsContractResponse struct {
+	// TransactionHash is the hash of the upgrade transaction
+	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+	TransactionHash string `json:"transactionHash"`
+}
+
+// UpgradeCollectibleContractRequest represents the request for upgrading a collectible contract
+type UpgradeCollectibleContractRequest struct {
+	// NewClassHash is the class hash of the new implementation contract
+	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+	NewClassHash string `json:"newClassHash"`
+
+	// CollectibleAddress is the address of the collectible contract to upgrade
+	// example: 0x1234567890abcdef1234567890abcdef12345678
+	CollectibleAddress string `json:"collectibleAddress"`
+}
+
+// UpgradeCollectibleContractResponse represents the response for upgrading a collectible contract
+type UpgradeCollectibleContractResponse struct {
+	// TransactionHash is the hash of the upgrade transaction
+	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+	TransactionHash string `json:"transactionHash"`
 }

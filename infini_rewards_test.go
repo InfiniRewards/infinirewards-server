@@ -177,7 +177,7 @@ func TestInfiniRewards(t *testing.T) {
 		t.Logf("Redeemed collectible for user1 with address: %s, tx hash: %s", user1Address, txHash)
 
 		// 6. GetBalance for Collectible
-		balance1, err := infinirewards.BalanceOf(ctx, user1Account, collectibleAddress, tokenId)
+		balance1, err := infinirewards.BalanceOf(ctx, user1Address, collectibleAddress, tokenId)
 		if err != nil {
 			t.Logf("Error getting balance for user1: %v", err)
 		}
@@ -185,7 +185,7 @@ func TestInfiniRewards(t *testing.T) {
 		assert.Equal(t, big.NewInt(4), balance1) // 5 minted - 1 redeemed
 		t.Logf("Balance for user1: %s", balance1.String())
 
-		balance2, err := infinirewards.BalanceOf(ctx, user2Account, collectibleAddress, tokenId)
+		balance2, err := infinirewards.BalanceOf(ctx, user2Address, collectibleAddress, tokenId)
 		if err != nil {
 			t.Logf("Error getting balance for user2: %v", err)
 		}
@@ -250,14 +250,14 @@ func TestInfiniRewards(t *testing.T) {
 
 			for _, contract := range collectibleContracts {
 				t.Logf("Getting details for collectible contract: %s", contract)
-				description, _, tokenIDs, _, _, _, err := infinirewards.GetDetails(ctx, contract)
+				name, description, _, tokenIDs, _, _, _, _, err := infinirewards.GetDetails(ctx, contract)
 				if err != nil {
 					t.Logf("Error getting details for collectible contract %s: %v", contract, err)
 				}
 				require.NoError(t, err)
-				t.Logf("Collectible Contract: %s, Description: %s", contract, description)
+				t.Logf("Collectible Contract: %s, Name: %s, Description: %s", contract, name, description)
 				for _, tokenID := range tokenIDs {
-					balance, err := infinirewards.BalanceOf(ctx, userAccount, contract, tokenID)
+					balance, err := infinirewards.BalanceOf(ctx, userAccount.AccountAddress.String(), contract, tokenID)
 					if err != nil {
 						t.Logf("Error getting balance for token ID %s: %v", tokenID.String(), err)
 					}

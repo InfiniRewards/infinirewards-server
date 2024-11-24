@@ -108,39 +108,6 @@ Request a one-time password for authentication
 | 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
 
 ---
-### /collectibles/mint
-
-#### POST
-##### Summary
-
-Mint collectible tokens
-
-##### Description
-
-Mint new collectible tokens for a specified recipient
-
-##### Parameters
-
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ------ |
-| request | body | Mint Request | Yes | [models.MintCollectibleRequest](#modelsmintcollectiblerequest) |
-
-##### Responses
-
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | Mint successful | [models.MintCollectibleResponse](#modelsmintcollectibleresponse) |
-| 400 | Invalid request format or validation failed | [models.ErrorResponse](#modelserrorresponse) |
-| 401 | Missing or invalid authentication token | [models.ErrorResponse](#modelserrorresponse) |
-| 403 | Insufficient permissions to mint | [models.ErrorResponse](#modelserrorresponse) |
-| 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
-
-##### Security
-
-| Security Schema | Scopes |
-| --------------- | ------ |
-| BearerAuth |  |
-
 ### /collectibles/{address}
 
 #### GET
@@ -386,6 +353,39 @@ Check if a collectible token is valid (not expired)
 | 404 | Token not found | [models.ErrorResponse](#modelserrorresponse) |
 | 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
 
+### /merchant/collectibles/mint
+
+#### POST
+##### Summary
+
+Mint collectible tokens
+
+##### Description
+
+Mint new collectible tokens for a specified recipient
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| request | body | Mint Request | Yes | [models.MintCollectibleRequest](#modelsmintcollectiblerequest) |
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | Mint successful | [models.MintCollectibleResponse](#modelsmintcollectibleresponse) |
+| 400 | Invalid request format or validation failed | [models.ErrorResponse](#modelserrorresponse) |
+| 401 | Missing or invalid authentication token | [models.ErrorResponse](#modelserrorresponse) |
+| 403 | Insufficient permissions to mint | [models.ErrorResponse](#modelserrorresponse) |
+| 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| BearerAuth |  |
+
 ---
 ### /merchant
 
@@ -456,6 +456,38 @@ Get all collectible contracts associated with a merchant
 | 401 | Missing or invalid authentication token | [models.ErrorResponse](#modelserrorresponse) |
 | 403 | Not a merchant account | [models.ErrorResponse](#modelserrorresponse) |
 | 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| BearerAuth |  |
+
+### /merchant/collectible/upgrade
+
+#### POST
+##### Summary
+
+Upgrade collectible contract
+
+##### Description
+
+Upgrade the collectible contract
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| request | body | Upgrade Collectible Contract Request | Yes | [models.UpgradeCollectibleContractRequest](#modelsupgradecollectiblecontractrequest) |
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | OK | [models.UpgradeCollectibleContractResponse](#modelsupgradecollectiblecontractresponse) |
+| 400 | Bad Request | string |
+| 401 | Unauthorized | string |
+| 500 | Internal Server Error | string |
 
 ##### Security
 
@@ -548,6 +580,70 @@ Get all points contracts associated with a merchant
 | 401 | Missing or invalid authentication token | [models.ErrorResponse](#modelserrorresponse) |
 | 403 | Not a merchant account | [models.ErrorResponse](#modelserrorresponse) |
 | 500 | Internal server error | [models.ErrorResponse](#modelserrorresponse) |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| BearerAuth |  |
+
+### /merchant/points/upgrade
+
+#### POST
+##### Summary
+
+Upgrade points contract
+
+##### Description
+
+Upgrade the points contract
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| request | body | Upgrade Points Contract Request | Yes | [models.UpgradePointsContractRequest](#modelsupgradepointscontractrequest) |
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | OK | [models.UpgradePointsContractResponse](#modelsupgradepointscontractresponse) |
+| 400 | Bad Request | string |
+| 401 | Unauthorized | string |
+| 500 | Internal Server Error | string |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| BearerAuth |  |
+
+### /merchant/upgrade
+
+#### POST
+##### Summary
+
+Upgrade merchant contract
+
+##### Description
+
+Upgrade the merchant contract
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| request | body | Upgrade Merchant Contract Request | Yes | [models.UpgradeMerchantContractRequest](#modelsupgrademerchantcontractrequest) |
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | OK | [models.UpgradeMerchantContractResponse](#modelsupgrademerchantcontractresponse) |
+| 400 | Bad Request | string |
+| 401 | Unauthorized | string |
+| 500 | Internal Server Error | string |
 
 ##### Security
 
@@ -793,6 +889,38 @@ Delete authenticated user
 | --------------- | ------ |
 | BearerAuth |  |
 
+### /user/upgrade
+
+#### POST
+##### Summary
+
+Upgrade User Contract
+
+##### Description
+
+Upgrade a user contract
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| request | body | Upgrade User Contract Request | Yes | [models.UpgradeUserContractRequest](#modelsupgradeusercontractrequest) |
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | OK | [models.UpgradeUserContractResponse](#modelsupgradeusercontractresponse) |
+| 400 | Bad Request | string |
+| 401 | Unauthorized | string |
+| 500 | Internal Server Error | string |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| BearerAuth |  |
+
 ---
 ### /user/api-keys
 
@@ -934,9 +1062,9 @@ Delete an API key for authenticated user
 | pointsContract | string | PointsContract is the address of the points contract used for purchases example: 0x1234567890abcdef1234567890abcdef12345678 | No |
 | tokenDescriptions | [ string ] | TokenDescriptions lists descriptions for each token example: ["Gold","Silver","Bronze"] | No |
 | tokenExpiries | [ integer ] | TokenExpiries lists expiry timestamps for each token example: [1735689600,1735689600,1735689600] | No |
+| tokenIds | [ string ] | TokenIDs lists all token IDs in the collection example: ["1","2","3"] | No |
 | tokenPrices | [ string ] | TokenPrices lists prices for each token example: ["100","200","300"] | No |
-| tokenTypes | [ string ] | TokenTypes lists all token IDs in the collection example: ["1","2","3"] | No |
-| totalSupply | string | TotalSupply across all token types example: 100 | No |
+| tokenSupplies | [ string ] | TokenSupplies lists supplies for each token example: [100,200,300] | No |
 
 #### models.CreateAPIKeyRequest
 
@@ -994,16 +1122,16 @@ Delete an API key for authenticated user
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| avatar | string |  | No |
-| email | string |  | No |
-| name | string |  | No |
+| avatar | string | Avatar is the user's avatar | No |
+| email | string | Email is the user's email example: john.doe@example.com | No |
+| name | string | Name is the user's name example: John Doe | No |
 
 #### models.ErrorResponse
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
 | code | string |  | No |
-| details | object |  | No |
+| details |  |  | No |
 | message | string |  | No |
 
 #### models.GetCollectibleBalanceResponse
@@ -1022,12 +1150,16 @@ Delete an API key for authenticated user
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
+| address | string | Address of the collectible collection example: 0x1234567890abcdef1234567890abcdef12345678 | No |
 | description | string | Description of the collectible collection example: Special Edition Collectibles | No |
+| name | string | Name of the collectible collection example: Special Edition Collectibles | No |
 | pointsContract | string | PointsContract is the address of the points contract example: 0x1234567890abcdef1234567890abcdef12345678 | No |
+| tokenBalances | [ string ] | TokenBalances lists balances for each token example: ["10","20","30"] | No |
 | tokenDescriptions | [ string ] | TokenDescriptions lists descriptions for each token example: ["Gold","Silver","Bronze"] | No |
 | tokenExpiries | [ integer ] | TokenExpiries lists expiry timestamps for each token example: [1735689600,1735689600,1735689600] | No |
-| tokenIDs | [ string ] | TokenIDs lists all token IDs in the collection example: ["1","2","3"] | No |
+| tokenIds | [ string ] | TokenIDs lists all token IDs in the collection example: ["1","2","3"] | No |
 | tokenPrices | [ string ] | TokenPrices lists prices for each token example: ["100","200","300"] | No |
+| tokenSupplies | [ integer ] | TokenSupplies lists supplies for each token example: [100,200,300] | No |
 
 #### models.GetCollectibleURIResponse
 
@@ -1040,6 +1172,10 @@ Delete an API key for authenticated user
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
 | balance | string | Balance is the number of points owned example: 1000 | No |
+| decimals | integer | Decimals of the points token example: 18 | No |
+| description | string | Description of the points token example: Premium points for our most loyal customers | No |
+| name | string | Name of the points token example: Premium Points | No |
+| symbol | string | Symbol of the points token example: PPM | No |
 
 #### models.GetPointsContractsResponse
 
@@ -1220,21 +1356,71 @@ Delete an API key for authenticated user
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| avatar | string |  | No |
-| email | string |  | No |
-| name | string |  | No |
+| avatar | string | Avatar is the user's avatar | No |
+| email | string | Email is the user's email example: john.doe@example.com | No |
+| name | string | Name is the user's name example: John Doe | No |
+
+#### models.UpgradeCollectibleContractRequest
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| collectibleAddress | string | CollectibleAddress is the address of the collectible contract to upgrade example: 0x1234567890abcdef1234567890abcdef12345678 | No |
+| newClassHash | string | NewClassHash is the class hash of the new implementation contract example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890 | No |
+
+#### models.UpgradeCollectibleContractResponse
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| transactionHash | string | TransactionHash is the hash of the upgrade transaction example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890 | No |
+
+#### models.UpgradeMerchantContractRequest
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| newClassHash | string | NewClassHash is the class hash of the new implementation contract example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890 | No |
+
+#### models.UpgradeMerchantContractResponse
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| transactionHash | string | TransactionHash is the hash of the upgrade transaction example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890 | No |
+
+#### models.UpgradePointsContractRequest
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| newClassHash | string | NewClassHash is the class hash of the new implementation contract example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890 | No |
+| pointsContract | string | PointsContract is the address of the points contract to upgrade example: 0x1234567890abcdef1234567890abcdef12345678 | No |
+
+#### models.UpgradePointsContractResponse
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| transactionHash | string | TransactionHash is the hash of the upgrade transaction example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890 | No |
+
+#### models.UpgradeUserContractRequest
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| newClassHash | string | NewClassHash is the class hash of the new implementation contract example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890 | No |
+
+#### models.UpgradeUserContractResponse
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| transactionHash | string | TransactionHash is the hash of the upgrade transaction example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890 | No |
 
 #### models.User
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| accountAddress | string | StarkNet account address | No |
-| avatar | string |  | No |
-| createdAt | string |  | No |
-| email | string |  | No |
-| id | string |  | No |
-| name | string |  | No |
-| phoneNumber | string |  | No |
-| privateKey | string | StarkNet private key | No |
-| publicKey | string | StarkNet public key | No |
-| updatedAt | string |  | No |
+| accountAddress | string | AccountAddress is the user's StarkNet account address | No |
+| avatar | string | Avatar is the user's avatar | No |
+| createdAt | string | CreatedAt is the time the user was created | No |
+| email | string | Email is the user's email example: john.doe@example.com | No |
+| id | string | ID is the user's ID example: 0x1234567890abcdef1234567890abcdef12345678 | No |
+| name | string | Name is the user's name example: John Doe | No |
+| phoneNumber | string | PhoneNumber is the user's phone number example: 1234567890 | No |
+| privateKey | string | PrivateKey is the user's StarkNet private key | No |
+| publicKey | string | PublicKey is the user's StarkNet public key | No |
+| updatedAt | string | UpdatedAt is the time the user was last updated | No |

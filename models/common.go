@@ -9,9 +9,9 @@ type MessageResponse struct {
 }
 
 type ErrorResponse struct {
-	Message string                 `json:"message"`
-	Code    string                 `json:"code,omitempty"`
-	Details map[string]interface{} `json:"details,omitempty"`
+	Message string      `json:"message"`
+	Code    string      `json:"code,omitempty"`
+	Details interface{} `json:"details,omitempty"`
 }
 
 func SchemaFor(t any) string {

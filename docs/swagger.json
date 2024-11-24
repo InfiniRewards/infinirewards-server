@@ -188,69 +188,6 @@
                 }
             }
         },
-        "/collectibles/mint": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Mint new collectible tokens for a specified recipient",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "collectibles"
-                ],
-                "summary": "Mint collectible tokens",
-                "parameters": [
-                    {
-                        "description": "Mint Request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.MintCollectibleRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Mint successful",
-                        "schema": {
-                            "$ref": "#/definitions/models.MintCollectibleResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request format or validation failed",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Missing or invalid authentication token",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Insufficient permissions to mint",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/collectibles/{address}": {
             "get": {
                 "description": "Get detailed information about a collectible contract",
@@ -930,6 +867,63 @@
                 }
             }
         },
+        "/merchant/collectible/upgrade": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Upgrade the collectible contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "merchants"
+                ],
+                "summary": "Upgrade collectible contract",
+                "parameters": [
+                    {
+                        "description": "Upgrade Collectible Contract Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpgradeCollectibleContractRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UpgradeCollectibleContractResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/merchant/collectibles": {
             "post": {
                 "security": [
@@ -980,6 +974,69 @@
                     },
                     "403": {
                         "description": "Not authorized to create collectibles",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/merchant/collectibles/mint": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mint new collectible tokens for a specified recipient",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collectibles"
+                ],
+                "summary": "Mint collectible tokens",
+                "parameters": [
+                    {
+                        "description": "Mint Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.MintCollectibleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mint successful",
+                        "schema": {
+                            "$ref": "#/definitions/models.MintCollectibleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format or validation failed",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid authentication token",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Insufficient permissions to mint",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -1097,6 +1154,120 @@
                         "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/merchant/points/upgrade": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Upgrade the points contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "merchants"
+                ],
+                "summary": "Upgrade points contract",
+                "parameters": [
+                    {
+                        "description": "Upgrade Points Contract Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpgradePointsContractRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UpgradePointsContractResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/merchant/upgrade": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Upgrade the merchant contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "merchants"
+                ],
+                "summary": "Upgrade merchant contract",
+                "parameters": [
+                    {
+                        "description": "Upgrade Merchant Contract Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpgradeMerchantContractRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UpgradeMerchantContractResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -1699,6 +1870,63 @@
                     }
                 }
             }
+        },
+        "/user/upgrade": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Upgrade a user contract",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Upgrade User Contract",
+                "parameters": [
+                    {
+                        "description": "Upgrade User Contract Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpgradeUserContractRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UpgradeUserContractResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1828,6 +2056,13 @@
                         "type": "integer"
                     }
                 },
+                "tokenIds": {
+                    "description": "TokenIDs lists all token IDs in the collection\nexample: [\"1\",\"2\",\"3\"]",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "tokenPrices": {
                     "description": "TokenPrices lists prices for each token\nexample: [\"100\",\"200\",\"300\"]",
                     "type": "array",
@@ -1835,16 +2070,12 @@
                         "type": "string"
                     }
                 },
-                "tokenTypes": {
-                    "description": "TokenTypes lists all token IDs in the collection\nexample: [\"1\",\"2\",\"3\"]",
+                "tokenSupplies": {
+                    "description": "TokenSupplies lists supplies for each token\nexample: [100,200,300]",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
-                },
-                "totalSupply": {
-                    "description": "TotalSupply across all token types\nexample: 100",
-                    "type": "string"
                 }
             }
         },
@@ -1981,12 +2212,15 @@
             "type": "object",
             "properties": {
                 "avatar": {
+                    "description": "Avatar is the user's avatar",
                     "type": "string"
                 },
                 "email": {
+                    "description": "Email is the user's email\nexample: john.doe@example.com",
                     "type": "string"
                 },
                 "name": {
+                    "description": "Name is the user's name\nexample: John Doe",
                     "type": "string"
                 }
             }
@@ -1997,10 +2231,7 @@
                 "code": {
                     "type": "string"
                 },
-                "details": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
+                "details": {},
                 "message": {
                     "type": "string"
                 }
@@ -2030,13 +2261,28 @@
         "models.GetCollectibleDetailsResponse": {
             "type": "object",
             "properties": {
+                "address": {
+                    "description": "Address of the collectible collection\nexample: 0x1234567890abcdef1234567890abcdef12345678",
+                    "type": "string"
+                },
                 "description": {
                     "description": "Description of the collectible collection\nexample: Special Edition Collectibles",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the collectible collection\nexample: Special Edition Collectibles",
                     "type": "string"
                 },
                 "pointsContract": {
                     "description": "PointsContract is the address of the points contract\nexample: 0x1234567890abcdef1234567890abcdef12345678",
                     "type": "string"
+                },
+                "tokenBalances": {
+                    "description": "TokenBalances lists balances for each token\nexample: [\"10\",\"20\",\"30\"]",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "tokenDescriptions": {
                     "description": "TokenDescriptions lists descriptions for each token\nexample: [\"Gold\",\"Silver\",\"Bronze\"]",
@@ -2052,7 +2298,7 @@
                         "type": "integer"
                     }
                 },
-                "tokenIDs": {
+                "tokenIds": {
                     "description": "TokenIDs lists all token IDs in the collection\nexample: [\"1\",\"2\",\"3\"]",
                     "type": "array",
                     "items": {
@@ -2064,6 +2310,13 @@
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                },
+                "tokenSupplies": {
+                    "description": "TokenSupplies lists supplies for each token\nexample: [100,200,300]",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
                     }
                 }
             }
@@ -2082,6 +2335,22 @@
             "properties": {
                 "balance": {
                     "description": "Balance is the number of points owned\nexample: 1000",
+                    "type": "string"
+                },
+                "decimals": {
+                    "description": "Decimals of the points token\nexample: 18",
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "Description of the points token\nexample: Premium points for our most loyal customers",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the points token\nexample: Premium Points",
+                    "type": "string"
+                },
+                "symbol": {
+                    "description": "Symbol of the points token\nexample: PPM",
                     "type": "string"
                 }
             }
@@ -2468,12 +2737,95 @@
             "type": "object",
             "properties": {
                 "avatar": {
+                    "description": "Avatar is the user's avatar",
                     "type": "string"
                 },
                 "email": {
+                    "description": "Email is the user's email\nexample: john.doe@example.com",
                     "type": "string"
                 },
                 "name": {
+                    "description": "Name is the user's name\nexample: John Doe",
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpgradeCollectibleContractRequest": {
+            "type": "object",
+            "properties": {
+                "collectibleAddress": {
+                    "description": "CollectibleAddress is the address of the collectible contract to upgrade\nexample: 0x1234567890abcdef1234567890abcdef12345678",
+                    "type": "string"
+                },
+                "newClassHash": {
+                    "description": "NewClassHash is the class hash of the new implementation contract\nexample: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpgradeCollectibleContractResponse": {
+            "type": "object",
+            "properties": {
+                "transactionHash": {
+                    "description": "TransactionHash is the hash of the upgrade transaction\nexample: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpgradeMerchantContractRequest": {
+            "type": "object",
+            "properties": {
+                "newClassHash": {
+                    "description": "NewClassHash is the class hash of the new implementation contract\nexample: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpgradeMerchantContractResponse": {
+            "type": "object",
+            "properties": {
+                "transactionHash": {
+                    "description": "TransactionHash is the hash of the upgrade transaction\nexample: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpgradePointsContractRequest": {
+            "type": "object",
+            "properties": {
+                "newClassHash": {
+                    "description": "NewClassHash is the class hash of the new implementation contract\nexample: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+                    "type": "string"
+                },
+                "pointsContract": {
+                    "description": "PointsContract is the address of the points contract to upgrade\nexample: 0x1234567890abcdef1234567890abcdef12345678",
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpgradePointsContractResponse": {
+            "type": "object",
+            "properties": {
+                "transactionHash": {
+                    "description": "TransactionHash is the hash of the upgrade transaction\nexample: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpgradeUserContractRequest": {
+            "type": "object",
+            "properties": {
+                "newClassHash": {
+                    "description": "NewClassHash is the class hash of the new implementation contract\nexample: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpgradeUserContractResponse": {
+            "type": "object",
+            "properties": {
+                "transactionHash": {
+                    "description": "TransactionHash is the hash of the upgrade transaction\nexample: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
                     "type": "string"
                 }
             }
@@ -2482,36 +2834,43 @@
             "type": "object",
             "properties": {
                 "accountAddress": {
-                    "description": "StarkNet account address",
+                    "description": "AccountAddress is the user's StarkNet account address",
                     "type": "string"
                 },
                 "avatar": {
+                    "description": "Avatar is the user's avatar",
                     "type": "string"
                 },
                 "createdAt": {
+                    "description": "CreatedAt is the time the user was created",
                     "type": "string"
                 },
                 "email": {
+                    "description": "Email is the user's email\nexample: john.doe@example.com",
                     "type": "string"
                 },
                 "id": {
+                    "description": "ID is the user's ID\nexample: 0x1234567890abcdef1234567890abcdef12345678",
                     "type": "string"
                 },
                 "name": {
+                    "description": "Name is the user's name\nexample: John Doe",
                     "type": "string"
                 },
                 "phoneNumber": {
+                    "description": "PhoneNumber is the user's phone number\nexample: 1234567890",
                     "type": "string"
                 },
                 "privateKey": {
-                    "description": "StarkNet private key",
+                    "description": "PrivateKey is the user's StarkNet private key",
                     "type": "string"
                 },
                 "publicKey": {
-                    "description": "StarkNet public key",
+                    "description": "PublicKey is the user's StarkNet public key",
                     "type": "string"
                 },
                 "updatedAt": {
+                    "description": "UpdatedAt is the time the user was last updated",
                     "type": "string"
                 }
             }

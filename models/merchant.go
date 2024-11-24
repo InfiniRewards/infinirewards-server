@@ -36,6 +36,20 @@ type CreateMerchantResponse struct {
 	PointsAddress string `json:"pointsAddress"`
 }
 
+// UpgradeMerchantContractRequest represents the request for upgrading a merchant contract
+type UpgradeMerchantContractRequest struct {
+	// NewClassHash is the class hash of the new implementation contract
+	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+	NewClassHash string `json:"newClassHash"`
+}
+
+// UpgradeMerchantContractResponse represents the response for upgrading a merchant contract
+type UpgradeMerchantContractResponse struct {
+	// TransactionHash is the hash of the upgrade transaction
+	// example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+	TransactionHash string `json:"transactionHash"`
+}
+
 type Merchant struct {
 	ID        string    `json:"id"`
 	Address   string    `json:"address"`

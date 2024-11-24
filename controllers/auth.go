@@ -20,6 +20,7 @@ import (
 )
 
 // RequestOTPHandler godoc
+//
 //	@Summary		Request OTP
 //	@Description	Request a one-time password for authentication
 //	@Tags			auth
@@ -86,12 +87,16 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 
 	var requestOTPRequest models.RequestOTPRequest
 	if err := json.NewDecoder(r.Body).Decode(&requestOTPRequest); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		WriteError(w, "Invalid request body", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	if err := requestOTPRequest.Validate(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		WriteError(w, "Invalid request parameters", ValidationError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusBadRequest)
 		return
 	}
 
@@ -99,8 +104,6 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	err := user.GetUserFromPhoneNumber(ctx, phoneNumber)
 	if err != nil {
-		// Create new user if not found
-		// userPublicKey, userSeed := nats.GenerateUserKey()
 		user = models.User{
 			PhoneNumber: phoneNumber,
 			CreatedAt:   time.Now(),
@@ -111,7 +114,9 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 				slog.String("phone_number", phoneNumber),
 				slog.String("error", err.Error()),
 			)
-			http.Error(w, "failed to create user", http.StatusInternalServerError)
+			WriteError(w, "Failed to create user", InternalServerError, map[string]string{
+				"reason": "Database operation failed",
+			}, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -125,7 +130,9 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 			slog.String("handler", "RequestOTPHandler"),
 			slog.String("error", err.Error()),
 		)
-		http.Error(w, "failed to generate OTP", http.StatusInternalServerError)
+		WriteError(w, "Failed to generate OTP", InternalServerError, map[string]string{
+			"reason": "Failed to generate TOTP key",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -143,7 +150,9 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 			slog.String("verification_id", phoneNumberVerification.ID),
 			slog.String("error", err.Error()),
 		)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		WriteError(w, "Internal server error", InternalServerError, map[string]string{
+			"reason": "Failed to marshal phone verification",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -152,7 +161,9 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 			slog.String("handler", "RequestOTPHandler"),
 			slog.String("error", err.Error()),
 		)
-		http.Error(w, "failed to store verification", http.StatusInternalServerError)
+		WriteError(w, "Failed to store verification", InternalServerError, map[string]string{
+			"reason": "Failed to store phone verification",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -167,7 +178,9 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 			slog.String("handler", "RequestOTPHandler"),
 			slog.String("error", err.Error()),
 		)
-		http.Error(w, "failed to generate OTP", http.StatusInternalServerError)
+		WriteError(w, "Failed to generate OTP", InternalServerError, map[string]string{
+			"reason": "Failed to generate OTP code",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -177,7 +190,9 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 			slog.String("phone_number", phoneNumber),
 			slog.String("error", err.Error()),
 		)
-		http.Error(w, "failed to send OTP", http.StatusInternalServerError)
+		WriteError(w, "Failed to send OTP", InternalServerError, map[string]string{
+			"reason": "Failed to send OTP",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -191,6 +206,7 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // AuthenticateHandler godoc
+//
 //	@Summary		Authenticate user
 //	@Description	Authenticate user using OTP or API key
 //	@Tags			auth
@@ -273,12 +289,16 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 
 	var authenticateRequest models.AuthenticateRequest
 	if err := json.NewDecoder(r.Body).Decode(&authenticateRequest); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		WriteError(w, "Invalid request format", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	if err := authenticateRequest.Validate(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		WriteError(w, "Validation failed", ValidationError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusBadRequest)
 		return
 	}
 
@@ -286,26 +306,33 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch authenticateRequest.Method {
 	case "otp":
-		// Handle OTP authentication
 		if err := handleOTPAuthentication(ctx, &user, authenticateRequest); err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			WriteError(w, "Authentication failed", AuthenticationError, map[string]string{
+				"reason": err.Error(),
+			}, http.StatusUnauthorized)
 			return
 		}
 	case "secret":
-		// Handle API key authentication
 		if err := handleAPIKeyAuthentication(ctx, &user, authenticateRequest); err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			WriteError(w, "Authentication failed", AuthenticationError, map[string]string{
+				"reason": err.Error(),
+			}, http.StatusUnauthorized)
 			return
 		}
 	default:
-		http.Error(w, "unsupported authentication method", http.StatusBadRequest)
+		WriteError(w, "Invalid authentication method", ValidationError, map[string]string{
+			"reason": "Unsupported authentication method",
+			"method": authenticateRequest.Method,
+		}, http.StatusBadRequest)
 		return
 	}
 
 	// Generate token
 	token, err := createJWT(user.ID, authenticateRequest.Device)
 	if err != nil {
-		http.Error(w, "failed to generate token: "+err.Error(), http.StatusInternalServerError)
+		WriteError(w, "failed to generate token: "+err.Error(), InternalServerError, map[string]string{
+			"reason": "Failed to generate token",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -318,6 +345,7 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // RefreshTokenHandler godoc
+//
 //	@Summary		Refresh token
 //	@Description	Refresh an existing authentication token
 //	@Tags			auth
@@ -387,42 +415,56 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	var refreshTokenRequest models.RefreshTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&refreshTokenRequest); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		WriteError(w, "Invalid request body", ValidationError, map[string]string{
+			"reason": "Unable to parse JSON request",
+		}, http.StatusBadRequest)
 		return
 	}
 
 	if err := refreshTokenRequest.Validate(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		WriteError(w, "Invalid request parameters", ValidationError, map[string]string{
+			"reason": err.Error(),
+		}, http.StatusBadRequest)
 		return
 	}
 
 	oldToken, err := getToken(ctx, refreshTokenRequest.RefreshToken)
 	if err != nil {
-		http.Error(w, "invalid refresh token", http.StatusUnauthorized)
+		WriteError(w, "Invalid refresh token", ValidationError, map[string]string{
+			"reason": "Invalid refresh token",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	userID, err := middleware.GetUserIDFromContext(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		WriteError(w, "Unauthorized", AuthorizationError, map[string]string{
+			"reason": "Unauthorized",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	if oldToken.User != userID {
-		http.Error(w, "user mismatch", http.StatusUnauthorized)
+		WriteError(w, "User mismatch", AuthorizationError, map[string]string{
+			"reason": "User mismatch",
+		}, http.StatusUnauthorized)
 		return
 	}
 
 	user := models.User{}
 	if err := user.GetUser(ctx, oldToken.User); err != nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		WriteError(w, "User not found", NotFoundError, map[string]string{
+			"reason": "User not found",
+		}, http.StatusNotFound)
 		return
 	}
 
 	// Generate new token
 	newToken, err := createJWT(user.ID, oldToken.Device)
 	if err != nil {
-		http.Error(w, "failed to generate token: "+err.Error(), http.StatusInternalServerError)
+		WriteError(w, "Failed to generate token", InternalServerError, map[string]string{
+			"reason": "Failed to generate token",
+		}, http.StatusInternalServerError)
 		return
 	}
 
@@ -524,7 +566,7 @@ func createJWT(userID string, device string) (*models.Token, error) {
 		ID:                 ulid.Make().String(),
 		User:               userID,
 		AccessToken:        token,
-		AccessTokenExpiry:  time.Now().Add(24 * time.Hour),
+		AccessTokenExpiry:  time.Now().Add(1 * time.Hour),
 		RefreshTokenExpiry: time.Now().Add(30 * 24 * time.Hour),
 		Device:             device,
 		Service:            "infinirewards",

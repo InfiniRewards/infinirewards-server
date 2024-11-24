@@ -27,13 +27,17 @@ func MintCollectible(account *account.Account, collectibleAddress string, to str
 	return resp.TransactionHash.String(), nil
 }
 
-func BalanceOf(ctx context.Context, account *account.Account, collectibleAddress string, tokenId *big.Int) (*big.Int, error) {
+func BalanceOf(ctx context.Context, addressStr string, collectibleAddress string, tokenId *big.Int) (*big.Int, error) {
+	addressFelt, err := utils.HexToFelt(addressStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert address to felt: %w", err)
+	}
 	collectibleAddressFelt, err := utils.HexToFelt(collectibleAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert collectible address to felt: %w", err)
 	}
 	tokenIdFelt := BigInt256ToFelt(tokenId)
-	calldata := []*felt.Felt{account.AccountAddress, tokenIdFelt[0], tokenIdFelt[1]}
+	calldata := []*felt.Felt{addressFelt, tokenIdFelt[0], tokenIdFelt[1]}
 	resp, err := CallContract(ctx, collectibleAddressFelt, "balanceOf", calldata)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get balance: %w", err)
@@ -129,23 +133,32 @@ func Redeem(ctx context.Context, account *account.Account, collectibleAddress st
 	return resp.TransactionHash.String(), nil
 }
 
-func GetDetails(ctx context.Context, collectibleAddress string) (string, string, []*big.Int, []*big.Int, []uint64, []string, error) {
+// GetDetails returns the details of the collectible
+// name, description, pointsContract, tokenIDs, tokenPrices, tokenExpiries, tokenDescriptions, tokenSupplies, error
+func GetDetails(ctx context.Context, collectibleAddress string) (string, string, string, []*big.Int, []*big.Int, []uint64, []string, []uint64, error) {
 	collectibleAddressFelt, err := utils.HexToFelt(collectibleAddress)
 	if err != nil {
-		return "", "", nil, nil, nil, nil, fmt.Errorf("failed to convert collectible address to felt: %w", err)
+		return "", "", "", nil, nil, nil, nil, nil, fmt.Errorf("failed to convert collectible address to felt: %w", err)
 	}
 	resp, err := CallContract(ctx, collectibleAddressFelt, "get_details", []*felt.Felt{})
 	if err != nil {
-		return "", "", nil, nil, nil, nil, fmt.Errorf("failed to get details: %w", err)
+		return "", "", "", nil, nil, nil, nil, nil, fmt.Errorf("failed to get details: %w", err)
 	}
 
 	// Parse the response
 	count := utils.FeltToBigInt(resp[0]).Int64()
-	description, err := utils.ByteArrFeltToString(resp[0 : 3+count])
+	name, err := utils.ByteArrFeltToString(resp[0 : 3+count])
 	if err != nil {
-		return "", "", nil, nil, nil, nil, fmt.Errorf("failed to convert description to string: %w", err)
+		return "", "", "", nil, nil, nil, nil, nil, fmt.Errorf("failed to convert description to string: %w", err)
 	}
 	currentIndex := 3 + count
+
+	count = utils.FeltToBigInt(resp[currentIndex]).Int64()
+	description, err := utils.ByteArrFeltToString(resp[currentIndex : currentIndex+3+count])
+	if err != nil {
+		return "", "", "", nil, nil, nil, nil, nil, fmt.Errorf("failed to convert description to string: %w", err)
+	}
+	currentIndex += 3 + count
 	pointsContract := PadZerosInFelt(resp[currentIndex])
 	currentIndex += 1
 
@@ -153,8 +166,8 @@ func GetDetails(ctx context.Context, collectibleAddress string) (string, string,
 	tokenIDsLen := utils.FeltToBigInt(resp[currentIndex]).Int64()
 	currentIndex += 1
 	tokenIDs := make([]*big.Int, tokenIDsLen)
-	for i := int64(0); i < tokenIDsLen; i += 2 {
-		tokenIDs[i] = FeltArrToBigInt256([2]*felt.Felt{resp[currentIndex+i], resp[currentIndex+i+1]})
+	for i := int64(0); i < tokenIDsLen; i++ {
+		tokenIDs[i] = FeltArrToBigInt256([2]*felt.Felt{resp[currentIndex+i*2], resp[currentIndex+i*2+1]})
 	}
 	currentIndex += tokenIDsLen * 2
 
@@ -162,8 +175,8 @@ func GetDetails(ctx context.Context, collectibleAddress string) (string, string,
 	tokenPricesLen := utils.FeltToBigInt(resp[currentIndex]).Int64()
 	currentIndex += 1
 	tokenPrices := make([]*big.Int, tokenPricesLen)
-	for i := int64(0); i < tokenPricesLen; i += 2 {
-		tokenPrices[i] = FeltArrToBigInt256([2]*felt.Felt{resp[currentIndex+i], resp[currentIndex+i+1]})
+	for i := int64(0); i < tokenPricesLen; i++ {
+		tokenPrices[i] = FeltArrToBigInt256([2]*felt.Felt{resp[currentIndex+i*2], resp[currentIndex+i*2+1]})
 	}
 	currentIndex += tokenPricesLen * 2
 
@@ -184,13 +197,23 @@ func GetDetails(ctx context.Context, collectibleAddress string) (string, string,
 		descriptionLen := utils.FeltToBigInt(resp[currentIndex]).Int64()
 		desc, err := utils.ByteArrFeltToString(resp[currentIndex : currentIndex+3+descriptionLen])
 		if err != nil {
-			return "", "", nil, nil, nil, nil, fmt.Errorf("failed to convert token description to string: %w", err)
+			return "", "", "", nil, nil, nil, nil, nil, fmt.Errorf("failed to convert token description to string: %w", err)
 		}
 		currentIndex += 3 + descriptionLen
 		tokenDescriptions[i] = desc
 	}
 
-	return description, pointsContract, tokenIDs, tokenPrices, tokenExpiries, tokenDescriptions, nil
+	// Parse token supplies
+	tokenSuppliesLen := utils.FeltToBigInt(resp[currentIndex]).Int64()
+	currentIndex += 1
+	tokenSupplies := make([]uint64, tokenSuppliesLen)
+	for i := int64(0); i < tokenSuppliesLen; i++ {
+		tokenSupply := FeltArrToBigInt256([2]*felt.Felt{resp[currentIndex+i*2], resp[currentIndex+i*2+1]})
+		tokenSupplies[i] = tokenSupply.Uint64()
+	}
+	currentIndex += tokenSuppliesLen
+
+	return name, description, pointsContract, tokenIDs, tokenPrices, tokenExpiries, tokenDescriptions, tokenSupplies, nil
 }
 
 func IsValid(ctx context.Context, collectibleAddress string, tokenId *big.Int) (bool, error) {
