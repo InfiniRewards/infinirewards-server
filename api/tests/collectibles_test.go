@@ -20,8 +20,8 @@ func TestCollectiblesManagement(t *testing.T) {
 	t.Run("Collectible Contract Operations", func(t *testing.T) {
 		// Create collectible using merchant token
 		createReq := models.CreateCollectibleRequest{
-			Name:        "Test Collectible",
-			Description: "Test collectible contract",
+			Name:     "Test Collectible",
+			Metadata: "Test collectible contract",
 		}
 		reqBody, _ := json.Marshal(createReq)
 
@@ -60,7 +60,7 @@ func TestCollectiblesManagement(t *testing.T) {
 			PointsContract: pointsContractsResp.Contracts[0].Address,
 			Price:          "100",
 			Expiry:         1735689600,
-			Description:    "Test token",
+			Metadata:       "Test token",
 		}
 		reqBody, _ = json.Marshal(tokenDataReq)
 
@@ -85,7 +85,7 @@ func TestCollectiblesManagement(t *testing.T) {
 		var tokenData models.GetTokenDataResponse
 		err = json.Unmarshal(w.Body.Bytes(), &tokenData)
 		assert.NoError(t, err)
-		assert.Equal(t, tokenDataReq.Description, tokenData.Description)
+		assert.Equal(t, tokenDataReq.Metadata, tokenData.Metadata)
 
 		// Mint collectible to the user's address
 		mintReq := models.MintCollectibleRequest{

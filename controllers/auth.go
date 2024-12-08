@@ -22,7 +22,7 @@ import (
 // RequestOTPHandler godoc
 //
 //	@Summary		Request OTP
-//	@Description	Request a one-time password for authentication
+//	@Metadata	Request a one-time password for authentication
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
@@ -208,7 +208,7 @@ func RequestOTPHandler(w http.ResponseWriter, r *http.Request) {
 // AuthenticateHandler godoc
 //
 //	@Summary		Authenticate user
-//	@Description	Authenticate user using OTP or API key
+//	@Metadata	Authenticate user using OTP or API key
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
@@ -347,7 +347,7 @@ func AuthenticateHandler(w http.ResponseWriter, r *http.Request) {
 // RefreshTokenHandler godoc
 //
 //	@Summary		Refresh token
-//	@Description	Refresh an existing authentication token
+//	@Metadata	Refresh an existing authentication token
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json

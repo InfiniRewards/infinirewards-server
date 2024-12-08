@@ -32,9 +32,9 @@ type CreateCollectibleRequest struct {
 	// example: Special Edition
 	Name string `json:"name" validate:"required,min=1,max=100"`
 
-	// Description of the collectible collection
+	// Metadata of the collectible collection
 	// example: Limited edition collectibles
-	Description string `json:"description" validate:"required,min=1,max=500"`
+	Metadata string `json:"description" validate:"required,min=1,max=500"`
 }
 
 // CreateCollectibleResponse represents the response from creating a collectible contract
@@ -69,9 +69,9 @@ type GetTokenDataResponse struct {
 	// example: 1735689600
 	Expiry int64 `json:"expiry"`
 
-	// Description is the token's metadata description
+	// Metadata is the token's metadata description
 	// example: Limited edition collectible
-	Description string `json:"description"`
+	Metadata string `json:"description"`
 }
 
 // RedeemCollectibleRequest represents a request to redeem a collectible
@@ -111,9 +111,9 @@ type CreatePointsContractRequest struct {
 	// example: PPT
 	Symbol string `json:"symbol" validate:"required,len=3|len=4,uppercase"`
 
-	// Description of the points system
+	// Metadata of the points system
 	// example: Premium tier loyalty points
-	Description string `json:"description" validate:"required,min=1,max=500"`
+	Metadata string `json:"description" validate:"required,min=1,max=500"`
 
 	// Decimals specifies the number of decimal places
 	// example: 18
@@ -209,9 +209,9 @@ type PointsContractInfo struct {
 	// example: SP
 	Symbol string `json:"symbol"`
 
-	// Description of the points token
+	// Metadata of the points token
 	// example: Loyalty points for Store XYZ
-	Description string `json:"description"`
+	Metadata string `json:"description"`
 
 	// Decimals places for the token
 	// example: 18
@@ -238,9 +238,9 @@ type CollectibleContractInfo struct {
 	// example: Special Edition
 	Name string `json:"name"`
 
-	// Description of the collection
+	// Metadata of the collection
 	// example: Limited collectibles
-	Description string `json:"description"`
+	Metadata string `json:"description"`
 
 	// PointsContract is the address of the points contract used for purchases
 	// example: 0x1234567890abcdef1234567890abcdef12345678
@@ -316,13 +316,13 @@ func (r *CreateCollectibleRequest) Validate() error {
 			Message: "name must be less than 100 characters",
 		}
 	}
-	if r.Description == "" {
+	if r.Metadata == "" {
 		return &ValidationError{
 			Field:   "description",
 			Message: "description is required",
 		}
 	}
-	if len(r.Description) > 500 {
+	if len(r.Metadata) > 500 {
 		return &ValidationError{
 			Field:   "description",
 			Message: "description must be less than 500 characters",
@@ -356,13 +356,13 @@ func (r *CreatePointsContractRequest) Validate() error {
 			Message: "symbol must be 3-4 characters",
 		}
 	}
-	if r.Description == "" {
+	if r.Metadata == "" {
 		return &ValidationError{
 			Field:   "description",
 			Message: "description is required",
 		}
 	}
-	if len(r.Description) > 500 {
+	if len(r.Metadata) > 500 {
 		return &ValidationError{
 			Field:   "description",
 			Message: "description must be less than 500 characters",
@@ -492,9 +492,9 @@ type SetTokenDataRequest struct {
 	// example: 1735689600
 	Expiry uint64 `json:"expiry" validate:"required,gt=0"`
 
-	// Description is the token's metadata description
+	// Metadata is the token's metadata description
 	// example: Limited edition collectible
-	Description string `json:"description" validate:"required,min=1,max=500"`
+	Metadata string `json:"description" validate:"required,min=1,max=500"`
 }
 
 type SetTokenDataResponse struct {
@@ -512,9 +512,9 @@ type GetCollectibleDetailsResponse struct {
 	// example: 0x1234567890abcdef1234567890abcdef12345678
 	Address string `json:"address"`
 
-	// Description of the collectible collection
+	// Metadata of the collectible collection
 	// example: Special Edition Collectibles
-	Description string `json:"description"`
+	Metadata string `json:"description"`
 
 	// PointsContract is the address of the points contract
 	// example: 0x1234567890abcdef1234567890abcdef12345678
@@ -605,7 +605,7 @@ func (r *SetTokenDataRequest) Validate() error {
 			Message: "expiry timestamp is required",
 		}
 	}
-	if r.Description == "" {
+	if r.Metadata == "" {
 		return &ValidationError{
 			Field:   "description",
 			Message: "description is required",
@@ -660,9 +660,9 @@ type GetPointsBalanceResponse struct {
 	// example: 18
 	Decimals uint64 `json:"decimals"`
 
-	// Description of the points token
+	// Metadata of the points token
 	// example: Premium points for our most loyal customers
-	Description string `json:"description"`
+	Metadata string `json:"description"`
 }
 
 // UpgradePointsContractRequest represents the request for upgrading a points contract

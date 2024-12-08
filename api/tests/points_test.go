@@ -18,10 +18,10 @@ func TestPointsManagement(t *testing.T) {
 	t.Run("Points Contract Operations", func(t *testing.T) {
 		// Create points contract using merchant token
 		createReq := models.CreatePointsContractRequest{
-			Name:        "Test Points",
-			Symbol:      "TST",
-			Description: "Test points contract",
-			Decimals:    "18",
+			Name:     "Test Points",
+			Symbol:   "TST",
+			Metadata: "Test points contract",
+			Decimals: "18",
 		}
 		reqBody, _ := json.Marshal(createReq)
 

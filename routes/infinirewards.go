@@ -9,7 +9,7 @@ import (
 func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	// Collectible endpoints
 	//	@Summary		Get Collectible Balance
-	//	@Description	Get balance of collectible tokens
+	//	@Metadata	Get balance of collectible tokens
 	//	@Tags			collectibles
 	//	@Accept			json
 	//	@Produce		json
@@ -24,7 +24,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /collectibles/{address}/balance/{tokenId}", middleware.AuthMiddleware(controllers.GetCollectibleBalanceHandler))
 
 	//	@Summary		Get Collectible URI
-	//	@Description	Get URI for collectible token
+	//	@Metadata	Get URI for collectible token
 	//	@Tags			collectibles
 	//	@Accept			json
 	//	@Produce		json
@@ -37,7 +37,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /collectibles/{address}/uri/{tokenId}", controllers.GetCollectibleURIHandler)
 
 	//	@Summary		Check Collectible Validity
-	//	@Description	Check if a collectible token is valid
+	//	@Metadata	Check if a collectible token is valid
 	//	@Tags			collectibles
 	//	@Accept			json
 	//	@Produce		json
@@ -49,7 +49,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /collectibles/{address}/valid/{tokenId}", controllers.IsCollectibleValidHandler)
 
 	//	@Summary		Set Token Data
-	//	@Description	Set token data for collectible
+	//	@Metadata	Set token data for collectible
 	//	@Tags			collectibles
 	//	@Accept			json
 	//	@Produce		json
@@ -65,7 +65,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /collectibles/{address}/token-data/{tokenId}", middleware.AuthMiddleware(controllers.SetTokenDataHandler))
 
 	//	@Summary		Get Token Data
-	//	@Description	Get token data for collectible
+	//	@Metadata	Get token data for collectible
 	//	@Tags			collectibles
 	//	@Accept			json
 	//	@Produce		json
@@ -78,7 +78,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /collectibles/{address}/token-data/{tokenId}", controllers.GetTokenDataHandler)
 
 	//	@Summary		Get Collectible Details
-	//	@Description	Get details for collectible token
+	//	@Metadata	Get details for collectible token
 	//	@Tags			collectibles
 	//	@Accept			json
 	//	@Produce		json
@@ -91,7 +91,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /collectibles/{address}", middleware.AuthMiddleware(controllers.GetCollectibleDetailsHandler))
 
 	//	@Summary		Redeem Collectible
-	//	@Description	Redeem collectible tokens
+	//	@Metadata	Redeem collectible tokens
 	//	@Tags			collectibles
 	//	@Accept			json
 	//	@Produce		json
@@ -106,7 +106,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 
 	// Points endpoints
 	//	@Summary		Mint Points
-	//	@Description	Mint new points tokens
+	//	@Metadata	Mint new points tokens
 	//	@Tags			points
 	//	@Accept			json
 	//	@Produce		json
@@ -120,7 +120,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /points/mint", middleware.AuthMiddleware(controllers.MintPointsHandler))
 
 	//	@Summary		Burn Points
-	//	@Description	Burn points tokens
+	//	@Metadata	Burn points tokens
 	//	@Tags			points
 	//	@Accept			json
 	//	@Produce		json
@@ -134,7 +134,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /points/burn", middleware.AuthMiddleware(controllers.BurnPointsHandler))
 
 	//	@Summary		Get Points Balance
-	//	@Description	Get points balance
+	//	@Metadata	Get points balance
 	//	@Tags			points
 	//	@Accept			json
 	//	@Produce		json
@@ -148,7 +148,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /points/{address}/balance", middleware.AuthMiddleware(controllers.GetPointsBalanceHandler))
 
 	//	@Summary		Transfer Points
-	//	@Description	Transfer points between accounts
+	//	@Metadata	Transfer points between accounts
 	//	@Tags			points
 	//	@Accept			json
 	//	@Produce		json
@@ -163,7 +163,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 
 	// Merchant endpoints
 	//	@Summary		Get Points Contracts
-	//	@Description	Get merchant's points contracts
+	//	@Metadata	Get merchant's points contracts
 	//	@Tags			merchants
 	//	@Accept			json
 	//	@Produce		json
@@ -175,7 +175,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /merchant/points-contracts", middleware.AuthMiddleware(controllers.GetPointsContractsHandler))
 
 	//	@Summary		Mint Collectible
-	//	@Description	Mint new collectible tokens
+	//	@Metadata	Mint new collectible tokens
 	//	@Tags			collectibles
 	//	@Accept			json
 	//	@Produce		json
@@ -189,7 +189,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /merchant/collectibles/mint", middleware.AuthMiddleware(controllers.MintCollectibleHandler))
 
 	//	@Summary		Get Collectible Contracts
-	//	@Description	Get merchant's collectible contracts
+	//	@Metadata	Get merchant's collectible contracts
 	//	@Tags			merchants
 	//	@Accept			json
 	//	@Produce		json
@@ -202,7 +202,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 
 	// Factory endpoints
 	//	@Summary		Create Merchant
-	//	@Description	Create a new merchant account
+	//	@Metadata	Create a new merchant account
 	//	@Tags			factory
 	//	@Accept			json
 	//	@Produce		json
@@ -214,7 +214,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /merchant", middleware.AuthMiddleware(controllers.CreateMerchantHandler))
 
 	//	@Summary		Create Collectible
-	//	@Description	Create a new collectible contract
+	//	@Metadata	Create a new collectible contract
 	//	@Tags			factory
 	//	@Accept			json
 	//	@Produce		json
@@ -228,7 +228,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /merchant/collectibles", middleware.AuthMiddleware(controllers.CreateCollectibleHandler))
 
 	//	@Summary		Create Points Contract
-	//	@Description	Create a new points contract
+	//	@Metadata	Create a new points contract
 	//	@Tags			factory
 	//	@Accept			json
 	//	@Produce		json
@@ -242,7 +242,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /merchant/points-contracts", middleware.AuthMiddleware(controllers.CreatePointsContractHandler))
 
 	//	@Summary		Upgrade Points Contract
-	//	@Description	Upgrade a points contract
+	//	@Metadata	Upgrade a points contract
 	//	@Tags			factory
 	//	@Accept			json
 	//	@Produce		json
@@ -256,7 +256,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /merchant/points/upgrade", middleware.AuthMiddleware(controllers.UpgradePointsContractHandler))
 
 	//	@Summary		Upgrade Collectible Contract
-	//	@Description	Upgrade a collectible contract
+	//	@Metadata	Upgrade a collectible contract
 	//	@Tags			factory
 	//	@Accept			json
 	//	@Produce		json
@@ -270,7 +270,7 @@ func SetInfiniRewardsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /merchant/collectible/upgrade", middleware.AuthMiddleware(controllers.UpgradeCollectibleContractHandler))
 
 	//	@Summary		Upgrade Merchant Contract
-	//	@Description	Upgrade a merchant contract
+	//	@Metadata	Upgrade a merchant contract
 	//	@Tags			factory
 	//	@Accept			json
 	//	@Produce		json

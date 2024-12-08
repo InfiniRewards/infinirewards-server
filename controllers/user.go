@@ -16,7 +16,7 @@ import (
 // UserGetUserHandler godoc
 //
 //	@Summary		Get user details
-//	@Description	Get authenticated user details
+//	@Metadata	Get authenticated user details
 //	@Tags			user
 //	@Accept			json
 //	@Produce		json
@@ -73,7 +73,7 @@ func UserGetUserHandler(w http.ResponseWriter, r *http.Request) {
 // UserCreateUserHandler godoc
 //
 //	@Summary		Create user
-//	@Description	Create a new user
+//	@Metadata	Create a new user
 //	@Tags			user
 //	@Accept			json
 //	@Produce		json
@@ -207,7 +207,7 @@ func UserCreateUserHandler(w http.ResponseWriter, r *http.Request) {
 // UserUpdateUserHandler godoc
 //
 //	@Summary		Update user
-//	@Description	Update authenticated user details
+//	@Metadata	Update authenticated user details
 //	@Tags			user
 //	@Accept			json
 //	@Produce		json
@@ -300,7 +300,7 @@ func UserUpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 // UserDeleteUserHandler godoc
 //
 //	@Summary		Delete user
-//	@Description	Delete authenticated user
+//	@Metadata	Delete authenticated user
 //	@Tags			user
 //	@Accept			json
 //	@Produce		json
@@ -361,7 +361,7 @@ func UserDeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 // UserCreateAPIKeyHandler godoc
 //
 //	@Summary		Create API key
-//	@Description	Create a new API key for authenticated user
+//	@Metadata	Create a new API key for authenticated user
 //	@Tags			api-keys
 //	@Accept			json
 //	@Produce		json
@@ -431,7 +431,7 @@ func UserCreateAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 // UserListAPIKeysHandler godoc
 //
 //	@Summary		List API keys
-//	@Description	List all API keys for authenticated user
+//	@Metadata	List all API keys for authenticated user
 //	@Tags			api-keys
 //	@Accept			json
 //	@Produce		json
@@ -478,7 +478,7 @@ func UserListAPIKeysHandler(w http.ResponseWriter, r *http.Request) {
 // UserDeleteAPIKeyHandler godoc
 //
 //	@Summary		Delete API key
-//	@Description	Delete an API key for authenticated user
+//	@Metadata	Delete an API key for authenticated user
 //	@Tags			api-keys
 //	@Accept			json
 //	@Produce		json
@@ -553,7 +553,7 @@ func UserDeleteAPIKeyHandler(w http.ResponseWriter, r *http.Request) {
 // UserUpgradeContractHandler godoc
 //
 //	@Summary		Upgrade User Contract
-//	@Description	Upgrade a user contract
+//	@Metadata	Upgrade a user contract
 //	@Tags			user
 //	@Accept			json
 //	@Produce		json

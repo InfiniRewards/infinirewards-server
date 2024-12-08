@@ -12,7 +12,7 @@ import (
 
 func SetUserRoutes(mux *http.ServeMux) {
 	//	@Summary		Get User
-	//	@Description	Get authenticated user details
+	//	@Metadata	Get authenticated user details
 	//	@Tags			user
 	//	@Accept			json
 	//	@Produce		json
@@ -26,7 +26,7 @@ func SetUserRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /user", middleware.AuthMiddleware(controllers.UserGetUserHandler))
 
 	//	@Summary		Create User
-	//	@Description	Create a new user
+	//	@Metadata	Create a new user
 	//	@Tags			user
 	//	@Accept			json
 	//	@Produce		json
@@ -38,7 +38,7 @@ func SetUserRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /user", middleware.AuthMiddleware(controllers.UserCreateUserHandler))
 
 	//	@Summary		Update User
-	//	@Description	Update authenticated user details
+	//	@Metadata	Update authenticated user details
 	//	@Tags			user
 	//	@Accept			json
 	//	@Produce		json
@@ -53,7 +53,7 @@ func SetUserRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /user", middleware.AuthMiddleware(controllers.UserUpdateUserHandler))
 
 	//	@Summary		Delete User
-	//	@Description	Delete authenticated user
+	//	@Metadata	Delete authenticated user
 	//	@Tags			user
 	//	@Accept			json
 	//	@Produce		json
@@ -67,7 +67,7 @@ func SetUserRoutes(mux *http.ServeMux) {
 
 	// API Key routes
 	//	@Summary		Create API Key
-	//	@Description	Create a new API key for authenticated user
+	//	@Metadata	Create a new API key for authenticated user
 	//	@Tags			api-keys
 	//	@Accept			json
 	//	@Produce		json
@@ -81,7 +81,7 @@ func SetUserRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /user/api-keys", middleware.AuthMiddleware(controllers.UserCreateAPIKeyHandler))
 
 	//	@Summary		List API Keys
-	//	@Description	List all API keys for authenticated user
+	//	@Metadata	List all API keys for authenticated user
 	//	@Tags			api-keys
 	//	@Accept			json
 	//	@Produce		json
@@ -93,7 +93,7 @@ func SetUserRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /user/api-keys", middleware.AuthMiddleware(controllers.UserListAPIKeysHandler))
 
 	//	@Summary		Delete API Key
-	//	@Description	Delete an API key
+	//	@Metadata	Delete an API key
 	//	@Tags			api-keys
 	//	@Accept			json
 	//	@Produce		json
@@ -107,7 +107,7 @@ func SetUserRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /user/api-keys/{keyId}", middleware.AuthMiddleware(controllers.UserDeleteAPIKeyHandler))
 
 	// @Summary		Upgrade User Contract
-	// @Description	Upgrade a user contract
+	// @Metadata	Upgrade a user contract
 	// @Tags			user
 	// @Accept			json
 	// @Produce		json

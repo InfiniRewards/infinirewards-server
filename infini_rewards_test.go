@@ -255,7 +255,7 @@ func TestInfiniRewards(t *testing.T) {
 					t.Logf("Error getting details for collectible contract %s: %v", contract, err)
 				}
 				require.NoError(t, err)
-				t.Logf("Collectible Contract: %s, Name: %s, Description: %s", contract, name, description)
+				t.Logf("Collectible Contract: %s, Name: %s, Metadata: %s", contract, name, description)
 				for _, tokenID := range tokenIDs {
 					balance, err := infinirewards.BalanceOf(ctx, userAccount.AccountAddress.String(), contract, tokenID)
 					if err != nil {

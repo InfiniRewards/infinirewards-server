@@ -15,7 +15,7 @@ import (
 // GetCollectibleBalanceHandler godoc
 //
 //	@Summary		Get collectible balance
-//	@Description	Get balance of collectible tokens for a specific token ID
+//	@Metadata	Get balance of collectible tokens for a specific token ID
 //	@Tags			collectibles
 //	@Accept			json
 //	@Produce		json
@@ -118,7 +118,7 @@ func GetCollectibleBalanceHandler(w http.ResponseWriter, r *http.Request) {
 // GetCollectibleURIHandler godoc
 //
 //	@Summary		Get collectible URI
-//	@Description	Get the URI for a specific collectible token's metadata
+//	@Metadata	Get the URI for a specific collectible token's metadata
 //	@Tags			collectibles
 //	@Accept			json
 //	@Produce		json
@@ -190,7 +190,7 @@ func GetCollectibleURIHandler(w http.ResponseWriter, r *http.Request) {
 // MintCollectibleHandler godoc
 //
 //	@Summary		Mint collectible tokens
-//	@Description	Mint new collectible tokens for a specified recipient
+//	@Metadata	Mint new collectible tokens for a specified recipient
 //	@Tags			collectibles
 //	@Accept			json
 //	@Produce		json
@@ -345,7 +345,7 @@ func MintCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 // SetTokenDataHandler godoc
 //
 //	@Summary		Set token data
-//	@Description	Set metadata for a collectible token
+//	@Metadata	Set metadata for a collectible token
 //	@Tags			collectibles
 //	@Accept			json
 //	@Produce		json
@@ -478,7 +478,7 @@ func SetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 		setReq.PointsContract,
 		price,
 		setReq.Expiry,
-		setReq.Description,
+		setReq.Metadata,
 	)
 	if err != nil {
 		WriteError(w, "Failed to set token data", InternalServerError, map[string]string{
@@ -501,7 +501,7 @@ func SetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 // MintPointsHandler godoc
 //
 //	@Summary		Mint points tokens
-//	@Description	Mint new points tokens for a specified recipient
+//	@Metadata	Mint new points tokens for a specified recipient
 //	@Tags			points
 //	@Accept			json
 //	@Produce		json
@@ -629,7 +629,7 @@ func MintPointsHandler(w http.ResponseWriter, r *http.Request) {
 // BurnPointsHandler godoc
 //
 //	@Summary		Burn points tokens
-//	@Description	Burn points tokens from a merchant's account
+//	@Metadata	Burn points tokens from a merchant's account
 //	@Tags			points
 //	@Accept			json
 //	@Produce		json
@@ -737,7 +737,7 @@ func BurnPointsHandler(w http.ResponseWriter, r *http.Request) {
 // GetPointsBalanceHandler godoc
 //
 //	@Summary		Get points balance
-//	@Description	Get the points balance for a specific account
+//	@Metadata	Get the points balance for a specific account
 //	@Tags			points
 //	@Accept			json
 //	@Produce		json
@@ -814,11 +814,11 @@ func GetPointsBalanceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := models.GetPointsBalanceResponse{
-		Balance:     balance.String(),
-		Name:        name,
-		Symbol:      symbol,
-		Decimals:    decimals,
-		Description: description,
+		Balance:  balance.String(),
+		Name:     name,
+		Symbol:   symbol,
+		Decimals: decimals,
+		Metadata: description,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -828,7 +828,7 @@ func GetPointsBalanceHandler(w http.ResponseWriter, r *http.Request) {
 // TransferPointsHandler godoc
 //
 //	@Summary		Transfer points between accounts
-//	@Description	Transfer points from one account to another
+//	@Metadata	Transfer points from one account to another
 //	@Tags			points
 //	@Accept			json
 //	@Produce		json
@@ -940,7 +940,7 @@ func TransferPointsHandler(w http.ResponseWriter, r *http.Request) {
 // GetTokenDataHandler godoc
 //
 //	@Summary		Get token data
-//	@Description	Get metadata for a collectible token
+//	@Metadata	Get metadata for a collectible token
 //	@Tags			collectibles
 //	@Accept			json
 //	@Produce		json
@@ -1023,7 +1023,7 @@ func GetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 		PointsContract: pointsContract,
 		Price:          price.String(),
 		Expiry:         int64(expiry),
-		Description:    description,
+		Metadata:       description,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1033,7 +1033,7 @@ func GetTokenDataHandler(w http.ResponseWriter, r *http.Request) {
 // RedeemCollectibleHandler godoc
 //
 //	@Summary		Redeem collectible
-//	@Description	Redeem a collectible token
+//	@Metadata	Redeem a collectible token
 //	@Tags			collectibles
 //	@Accept			json
 //	@Produce		json
@@ -1188,7 +1188,7 @@ func RedeemCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 // GetCollectibleDetailsHandler godoc
 //
 //	@Summary		Get collectible details
-//	@Description	Get detailed information about a collectible contract
+//	@Metadata	Get detailed information about a collectible contract
 //	@Tags			collectibles
 //	@Accept			json
 //	@Produce		json
@@ -1292,7 +1292,7 @@ func GetCollectibleDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	resp := models.GetCollectibleDetailsResponse{
 		Name:              name,
 		Address:           address,
-		Description:       description,
+		Metadata:          description,
 		PointsContract:    pointsContract,
 		TokenIDs:          tokenIDStrings,
 		TokenPrices:       tokenPriceStrings,
@@ -1309,7 +1309,7 @@ func GetCollectibleDetailsHandler(w http.ResponseWriter, r *http.Request) {
 // IsCollectibleValidHandler godoc
 //
 //	@Summary		Check collectible validity
-//	@Description	Check if a collectible token is valid (not expired)
+//	@Metadata	Check if a collectible token is valid (not expired)
 //	@Tags			collectibles
 //	@Accept			json
 //	@Produce		json
@@ -1381,7 +1381,7 @@ func IsCollectibleValidHandler(w http.ResponseWriter, r *http.Request) {
 // PurchaseCollectibleHandler godoc
 //
 //	@Summary		Purchase collectible
-//	@Description	Purchase a collectible token using points
+//	@Metadata	Purchase a collectible token using points
 //	@Tags			collectibles
 //	@Accept			json
 //	@Produce		json

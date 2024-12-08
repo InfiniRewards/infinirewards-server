@@ -7,7 +7,7 @@ const docTemplate = `{
     "schemes": {{ marshal .Schemes }},
     "swagger": "2.0",
     "info": {
-        "description": "{{escape .Description}}",
+        "description": "{{escape .Metadata}}",
         "title": "{{.Title}}",
         "contact": {
             "name": "API Support",
@@ -2033,7 +2033,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description of the collection\nexample: Limited collectibles",
+                    "description": "Metadata of the collection\nexample: Limited collectibles",
                     "type": "string"
                 },
                 "name": {
@@ -2097,7 +2097,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "description": {
-                    "description": "Description of the collectible collection\nexample: Limited edition collectibles",
+                    "description": "Metadata of the collectible collection\nexample: Limited edition collectibles",
                     "type": "string",
                     "maxLength": 500,
                     "minLength": 1
@@ -2180,7 +2180,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description of the points system\nexample: Premium tier loyalty points",
+                    "description": "Metadata of the points system\nexample: Premium tier loyalty points",
                     "type": "string",
                     "maxLength": 500,
                     "minLength": 1
@@ -2268,7 +2268,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description of the collectible collection\nexample: Special Edition Collectibles",
+                    "description": "Metadata of the collectible collection\nexample: Special Edition Collectibles",
                     "type": "string"
                 },
                 "name": {
@@ -2344,7 +2344,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "description": {
-                    "description": "Description of the points token\nexample: Premium points for our most loyal customers",
+                    "description": "Metadata of the points token\nexample: Premium points for our most loyal customers",
                     "type": "string"
                 },
                 "name": {
@@ -2373,7 +2373,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "description": {
-                    "description": "Description is the token's metadata description\nexample: Limited edition collectible",
+                    "description": "Metadata is the token's metadata description\nexample: Limited edition collectible",
                     "type": "string"
                 },
                 "expiry": {
@@ -2513,7 +2513,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "description": {
-                    "description": "Description of the points token\nexample: Loyalty points for Store XYZ",
+                    "description": "Metadata of the points token\nexample: Loyalty points for Store XYZ",
                     "type": "string"
                 },
                 "name": {
@@ -2646,7 +2646,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "description": {
-                    "description": "Description is the token's metadata description\nexample: Limited edition collectible",
+                    "description": "Metadata is the token's metadata description\nexample: Limited edition collectible",
                     "type": "string",
                     "maxLength": 500,
                     "minLength": 1

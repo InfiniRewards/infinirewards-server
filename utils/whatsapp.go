@@ -99,9 +99,9 @@ type Section struct {
 }
 
 type Row struct {
-	ID          string `json:"id,omitempty"`
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
+	ID       string `json:"id,omitempty"`
+	Title    string `json:"title,omitempty"`
+	Metadata string `json:"description,omitempty"`
 }
 
 func InitWhatsApp() error {

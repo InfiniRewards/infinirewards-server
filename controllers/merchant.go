@@ -17,7 +17,7 @@ import (
 // CreateMerchantHandler godoc
 //
 //	@Summary		Create new merchant
-//	@Description	Create a new merchant account with initial points contract
+//	@Metadata	Create a new merchant account with initial points contract
 //	@Tags			merchants
 //	@Accept			json
 //	@Produce		json
@@ -139,7 +139,7 @@ func CreateMerchantHandler(w http.ResponseWriter, r *http.Request) {
 // CreateCollectibleHandler godoc
 //
 //	@Summary		Create collectible contract
-//	@Description	Create a new collectible contract for a merchant
+//	@Metadata	Create a new collectible contract for a merchant
 //	@Tags			merchants
 //	@Accept			json
 //	@Produce		json
@@ -154,7 +154,7 @@ func CreateMerchantHandler(w http.ResponseWriter, r *http.Request) {
 //
 //	{
 //	  "name": "Special Edition",           // Name of the collectible contract
-//	  "description": "Limited collectibles" // Description of the collection
+//	  "description": "Limited collectibles" // Metadata of the collection
 //	}
 //
 //	@Example		{json} Success Response:
@@ -236,7 +236,7 @@ func CreateCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 	txHash, address, err := infinirewards.CreateInfiniRewardsCollectible(
 		account,
 		createReq.Name,
-		createReq.Description,
+		createReq.Metadata,
 	)
 	if err != nil {
 		WriteError(w, "Failed to create collectible", InternalServerError, map[string]string{
@@ -258,7 +258,7 @@ func CreateCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 // CreatePointsContractHandler godoc
 //
 //	@Summary		Create points contract
-//	@Description	Create an additional points contract for a merchant
+//	@Metadata	Create an additional points contract for a merchant
 //	@Tags			merchants
 //	@Accept			json
 //	@Produce		json
@@ -274,7 +274,7 @@ func CreateCollectibleHandler(w http.ResponseWriter, r *http.Request) {
 //	{
 //	  "name": "Premium Points",          // Name of the points token
 //	  "symbol": "PPT",                   // Token symbol (3-4 characters)
-//	  "description": "Premium rewards",   // Description of the points
+//	  "description": "Premium rewards",   // Metadata of the points
 //	  "decimals": "18"                   // Decimal places for the token
 //	}
 //
@@ -357,7 +357,7 @@ func CreatePointsContractHandler(w http.ResponseWriter, r *http.Request) {
 		account,
 		createReq.Name,
 		createReq.Symbol,
-		createReq.Description,
+		createReq.Metadata,
 		decimals,
 	)
 	if err != nil {
@@ -380,7 +380,7 @@ func CreatePointsContractHandler(w http.ResponseWriter, r *http.Request) {
 // GetPointsContractsHandler godoc
 //
 //	@Summary		Get merchant's points contracts
-//	@Description	Get all points contracts associated with a merchant
+//	@Metadata	Get all points contracts associated with a merchant
 //	@Tags			merchants
 //	@Accept			json
 //	@Produce		json
@@ -481,7 +481,7 @@ func GetPointsContractsHandler(w http.ResponseWriter, r *http.Request) {
 			Address:     addr,
 			Name:        name,
 			Symbol:      symbol,
-			Description: description,
+			Metadata:    description,
 			Decimals:    uint8(decimals),
 			TotalSupply: uint64(totalSupply),
 		}
@@ -498,7 +498,7 @@ func GetPointsContractsHandler(w http.ResponseWriter, r *http.Request) {
 // GetCollectibleContractsHandler godoc
 //
 //	@Summary		Get merchant's collectible contracts
-//	@Description	Get all collectible contracts associated with a merchant
+//	@Metadata	Get all collectible contracts associated with a merchant
 //	@Tags			merchants
 //	@Accept			json
 //	@Produce		json
@@ -618,7 +618,7 @@ func GetCollectibleContractsHandler(w http.ResponseWriter, r *http.Request) {
 		contractInfos[i] = models.CollectibleContractInfo{
 			Address:           addr,
 			Name:              name,
-			Description:       description,
+			Metadata:          description,
 			PointsContract:    pointsContract,
 			TokenIDs:          tokenIDStrings,
 			TokenPrices:       tokenPriceStrings,
@@ -639,7 +639,7 @@ func GetCollectibleContractsHandler(w http.ResponseWriter, r *http.Request) {
 // GetMerchantHandler godoc
 //
 //	@Summary		Get merchant details
-//	@Description	Get details of a merchant
+//	@Metadata	Get details of a merchant
 //	@Tags			merchants
 //	@Accept			json
 //	@Produce		json
@@ -677,7 +677,7 @@ func GetMerchantHandler(w http.ResponseWriter, r *http.Request) {
 // UpgradeMerchantContractHandler godoc
 //
 //	@Summary		Upgrade merchant contract
-//	@Description	Upgrade the merchant contract
+//	@Metadata	Upgrade the merchant contract
 //	@Tags			merchants
 //	@Accept			json
 //	@Produce		json
@@ -762,7 +762,7 @@ func UpgradeMerchantContractHandler(w http.ResponseWriter, r *http.Request) {
 // UpgradePointsContractHandler godoc
 //
 //	@Summary		Upgrade points contract
-//	@Description	Upgrade the points contract
+//	@Metadata	Upgrade the points contract
 //	@Tags			merchants
 //	@Accept			json
 //	@Produce		json
@@ -847,7 +847,7 @@ func UpgradePointsContractHandler(w http.ResponseWriter, r *http.Request) {
 // UpgradeCollectibleContractHandler godoc
 //
 //	@Summary		Upgrade collectible contract
-//	@Description	Upgrade the collectible contract
+//	@Metadata	Upgrade the collectible contract
 //	@Tags			merchants
 //	@Accept			json
 //	@Produce		json
