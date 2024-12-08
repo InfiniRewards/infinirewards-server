@@ -13,6 +13,7 @@ import (
 var debugPhoneNumbers = []string{
 	"+60123456789",
 	"+60129876543",
+	"+60143382537",
 }
 
 // SendPhoneOTP sends OTP to the given phone number

@@ -12,7 +12,7 @@ import (
 )
 
 var Logger *slog.Logger
-var LogLevel slog.Level = slog.LevelInfo
+var LogLevel slog.Level = slog.LevelDebug
 
 // multiWriter implements io.Writer to write to multiple destinations
 type multiWriter struct {
@@ -84,8 +84,8 @@ func (h *customHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &customHandler{
 		terminalHandler: termHandler,
 		natsHandler:     natsHandler,
-		level:          h.level,
-		natsOnly:       h.natsOnly,
+		level:           h.level,
+		natsOnly:        h.natsOnly,
 	}
 }
 
@@ -98,8 +98,8 @@ func (h *customHandler) WithGroup(name string) slog.Handler {
 	return &customHandler{
 		terminalHandler: termHandler,
 		natsHandler:     natsHandler,
-		level:          h.level,
-		natsOnly:       h.natsOnly,
+		level:           h.level,
+		natsOnly:        h.natsOnly,
 	}
 }
 
@@ -136,8 +136,8 @@ func InitHandler(id string) {
 	handler := &customHandler{
 		terminalHandler: terminalHandler,
 		natsHandler:     natsHandler,
-		level:          LogLevel,
-		natsOnly:       false,
+		level:           LogLevel,
+		natsOnly:        false,
 	}
 
 	Logger = slog.New(handler)
@@ -166,8 +166,8 @@ func CreateNatsOnlyLogger(id string) *slog.Logger {
 	handler := &customHandler{
 		terminalHandler: nil,
 		natsHandler:     slog.NewJSONHandler(natsWriter, nil),
-		level:          LogLevel,
-		natsOnly:       true,
+		level:           LogLevel,
+		natsOnly:        true,
 	}
 
 	return slog.New(handler)

@@ -3,6 +3,8 @@ package infinirewards
 import (
 	"context"
 	"fmt"
+	"infinirewards/logs"
+	"log/slog"
 	"math/big"
 	"os"
 
@@ -30,6 +32,9 @@ func ConnectStarknet() error {
 	var masterAccntAddress string
 
 	network := os.Getenv("NETWORK")
+	logs.Logger.Info("connecting to starknet",
+		slog.String("network", network),
+	)
 	switch network {
 	case "devnet":
 		rpcProviderUrl = os.Getenv("RPC_PROVIDER_URL_DEVNET")

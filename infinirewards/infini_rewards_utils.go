@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math/big"
-	"strconv"
 	"time"
 
 	"infinirewards/logs"
@@ -47,7 +46,7 @@ func InvokeTransactionMaster(contractAddressStr string, functionSelectorStr stri
 		ResourceBounds: rpc.ResourceBoundsMapping{
 			L1Gas: rpc.ResourceBounds{
 				MaxAmount:       "0x2710",
-				MaxPricePerUnit: "0x174876E800",
+				MaxPricePerUnit: "0x2386F26FC10000",
 			},
 			L2Gas: rpc.ResourceBounds{
 				MaxAmount:       "0x0",
@@ -82,6 +81,24 @@ func InvokeTransactionMaster(contractAddressStr string, functionSelectorStr stri
 		return nil, fmt.Errorf("failed to sign transaction: %w", err)
 	}
 
+	// Estimate the fee
+	feeRes, err := masterAccnt.EstimateFee(
+		context.Background(),
+		[]rpc.BroadcastTxn{rpc.BroadcastInvokev3Txn{InvokeTxnV3: invokeTx}},
+		[]rpc.SimulationFlag{},
+		rpc.WithBlockTag("latest"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to estimate fee: %w", err)
+	}
+
+	logs.Logger.Debug("estimated fee",
+		slog.String("overall_fee", feeRes[0].OverallFee.String()),
+		slog.String("gas_consumed", feeRes[0].GasConsumed.String()),
+		slog.String("gas_price", feeRes[0].GasPrice.String()),
+		slog.String("fee_unit", string(feeRes[0].FeeUnit)),
+	)
+
 	// Execute the transaction
 	resp, err := masterAccnt.AddInvokeTransaction(context.Background(), rpc.BroadcastInvokev3Txn{InvokeTxnV3: invokeTx})
 	if err != nil {
@@ -89,21 +106,21 @@ func InvokeTransactionMaster(contractAddressStr string, functionSelectorStr stri
 	}
 
 	// Wait for the transaction to be accepted
-	txStatus, err := waitForTransaction(resp.TransactionHash, 5)
+	receipt, err := waitForTransaction(resp.TransactionHash, 15)
 	if err != nil {
 		return nil, fmt.Errorf("failed to wait for transaction: %w", err)
 	}
 
-	// Get the transaction details
-	receipt, err := Client.TransactionReceipt(context.Background(), resp.TransactionHash)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get transaction details: %w", err)
-	}
+	// // Get the transaction details
+	// receipt, err := Client.TransactionReceipt(context.Background(), resp.TransactionHash)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get transaction details: %w", err)
+	// }
 
-	if txStatus.ExecutionStatus != rpc.TxnExecutionStatusSUCCEEDED {
-		return nil, fmt.Errorf("transaction failed with status: %s, error: %s", txStatus.ExecutionStatus, receipt.TransactionReceipt.RevertReason)
-	}
-	fmt.Printf("Gas used: %.6e %s\n", float64(utils.FeltToBigInt(receipt.TransactionReceipt.ActualFee.Amount).Int64()), receipt.TransactionReceipt.ActualFee.Unit)
+	logs.Logger.Debug("gas used",
+		slog.String("amount", receipt.TransactionReceipt.ActualFee.Amount.String()),
+		slog.String("unit", string(receipt.TransactionReceipt.ActualFee.Unit)),
+	)
 
 	return receipt, nil
 }
@@ -134,7 +151,7 @@ func InvokeTransaction(account *account.Account, contractAddressStr string, func
 		ResourceBounds: rpc.ResourceBoundsMapping{
 			L1Gas: rpc.ResourceBounds{
 				MaxAmount:       "0x2710",
-				MaxPricePerUnit: "0x174876E800",
+				MaxPricePerUnit: "0x2386F26FC10000",
 			},
 			L2Gas: rpc.ResourceBounds{
 				MaxAmount:       "0x0",
@@ -176,20 +193,20 @@ func InvokeTransaction(account *account.Account, contractAddressStr string, func
 	}
 
 	// Wait for the transaction to be accepted
-	txStatus, err := waitForTransaction(resp.TransactionHash, 5)
+	receipt, err := waitForTransaction(resp.TransactionHash, 15)
 	if err != nil {
 		return nil, fmt.Errorf("failed to wait for transaction: %w", err)
 	}
 
-	// Get the transaction details
-	receipt, err := Client.TransactionReceipt(context.Background(), resp.TransactionHash)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get transaction details: %w", err)
-	}
+	// // Get the transaction details
+	// receipt, err := Client.TransactionReceipt(context.Background(), resp.TransactionHash)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get transaction details: %w", err)
+	// }
 
-	if txStatus.ExecutionStatus != rpc.TxnExecutionStatusSUCCEEDED {
-		return nil, fmt.Errorf("transaction failed with status: %s, error: %s", txStatus.ExecutionStatus, receipt.TransactionReceipt.RevertReason)
-	}
+	// if txStatus.ExecutionStatus != rpc.TxnExecutionStatusSUCCEEDED {
+	// 	return nil, fmt.Errorf("transaction failed with status: %s, error: %s", txStatus.ExecutionStatus, receipt.TransactionReceipt.RevertReason)
+	// }
 	fmt.Printf("Gas used: %.6e %s\n", float64(utils.FeltToBigInt(receipt.TransactionReceipt.ActualFee.Amount).Int64()), receipt.TransactionReceipt.ActualFee.Unit)
 
 	return receipt, nil
@@ -213,36 +230,53 @@ func SignInvokeTransaction(ctx context.Context, account *account.Account, invoke
 //	@param		txHash:		The	hash	of		the	transaction
 //	@param		maxRetries:	The	maximum	number	of	retries
 //	@return:	The transaction status and an error
-func waitForTransaction(txHash *felt.Felt, maxRetries int) (*rpc.TxnStatusResp, error) {
+func waitForTransaction(txHash *felt.Felt, maxRetries int) (*rpc.TransactionReceiptWithBlockInfo, error) {
+	var status *rpc.TxnStatusResp
+	var err error
 	for i := 0; i < maxRetries; i++ {
-		status, err := Client.GetTransactionStatus(context.Background(), txHash)
+		status, err = Client.GetTransactionStatus(context.Background(), txHash)
 		if err != nil {
-			logs.Logger.Error("failed to get transaction status",
+			logs.Logger.Debug("failed to get transaction status",
 				slog.String("handler", "waitForTransaction"),
 				slog.String("tx_hash", txHash.String()),
 				slog.String("error", err.Error()),
 				slog.Int("attempt", i+1),
 			)
-			return nil, err
-		}
-
-		if status.FinalityStatus == rpc.TxnStatus_Accepted_On_L2 {
+			// return nil, err
+		} else if status.FinalityStatus == rpc.TxnStatus_Accepted_On_L2 {
 			logs.Logger.Debug("transaction confirmed",
 				slog.String("handler", "waitForTransaction"),
 				slog.String("tx_hash", txHash.String()),
 				slog.Int("attempts", i+1),
 			)
-			return status, nil
+			break
 		}
 
 		time.Sleep(5 * time.Second)
 	}
 
-	logs.Logger.Error("transaction confirmation timeout",
-		slog.String("handler", "waitForTransaction"),
-		slog.String("tx_hash", txHash.String()),
-		slog.Int("max_retries", maxRetries),
-	)
+	if status == nil {
+		logs.Logger.Error("transaction confirmation timeout",
+			slog.String("handler", "waitForTransaction"),
+			slog.String("tx_hash", txHash.String()),
+			slog.Int("max_retries", maxRetries),
+		)
+	}
+	var receipt *rpc.TransactionReceiptWithBlockInfo
+	for i := 0; i < maxRetries; i++ {
+		receipt, err = Client.TransactionReceipt(context.Background(), txHash)
+		if err != nil {
+			logs.Logger.Debug("failed to get transaction receipt",
+				slog.String("handler", "waitForTransaction"),
+				slog.String("tx_hash", txHash.String()),
+				slog.String("error", err.Error()),
+				slog.Int("attempt", i+1),
+			)
+		} else if receipt.TransactionReceipt.ExecutionStatus == rpc.TxnExecutionStatusSUCCEEDED {
+			return receipt, nil
+		}
+		time.Sleep(5 * time.Second)
+	}
 	return nil, fmt.Errorf("transaction not confirmed after %d attempts", maxRetries)
 }
 
@@ -301,14 +335,30 @@ func FundAccount(address string) (string, error) {
 	}
 
 	// Building the InvokeTx struct
-	InvokeTx := rpc.BroadcastInvokev1Txn{
-		InvokeTxnV1: rpc.InvokeTxnV1{
-			MaxFee:        new(felt.Felt).SetUint64(100000000000000),
-			Version:       rpc.TransactionV1,
-			Nonce:         nonce,
-			Type:          rpc.TransactionType_Invoke,
-			SenderAddress: masterAccnt.AccountAddress,
-		}}
+	InvokeTx := rpc.BroadcastInvokev3Txn{
+		InvokeTxnV3: rpc.InvokeTxnV3{
+			// MaxFee:        new(felt.Felt).SetUint64(100000000000000),
+			ResourceBounds: rpc.ResourceBoundsMapping{
+				L1Gas: rpc.ResourceBounds{
+					MaxAmount:       "0x2710",
+					MaxPricePerUnit: "0x2386F26FC10000",
+				},
+				L2Gas: rpc.ResourceBounds{
+					MaxAmount:       "0x0",
+					MaxPricePerUnit: "0x0",
+				},
+			},
+			Version:               rpc.TransactionV3,
+			Nonce:                 nonce,
+			Type:                  rpc.TransactionType_Invoke,
+			SenderAddress:         masterAccnt.AccountAddress,
+			NonceDataMode:         rpc.DAModeL1,
+			FeeMode:               rpc.DAModeL1,
+			Tip:                   "0x0",
+			PayMasterData:         []*felt.Felt{},
+			AccountDeploymentData: []*felt.Felt{},
+		},
+	}
 
 	// Converting the STRK contractAddress from hex to felt
 	contractAddress, err := HexToFelt("0x4718F5A0FC34CC1AF16A1CDEE98FFB20C31F5CD61D6AB07201858F4287C938D")
@@ -332,30 +382,30 @@ func FundAccount(address string) (string, error) {
 	}
 
 	// Signing of the transaction that is done by the account
-	err = masterAccnt.SignInvokeTransaction(context.Background(), &InvokeTx.InvokeTxnV1)
+	err = SignInvokeTransaction(context.Background(), masterAccnt, &InvokeTx.InvokeTxnV3)
 	if err != nil {
 		return "", err
 	}
 
-	// Estimate the transaction fee
-	feeRes, err := masterAccnt.EstimateFee(context.Background(), []rpc.BroadcastTxn{InvokeTx}, []rpc.SimulationFlag{}, rpc.WithBlockTag("latest"))
-	if err != nil {
-		return "", PanicRPC(err)
-	}
-	estimatedFee := feeRes[0].OverallFee
-	// If the estimated fee is higher than the current fee, let's override it and sign again
-	if estimatedFee.Cmp(InvokeTx.MaxFee) == 1 {
-		newFee, err := strconv.ParseUint(estimatedFee.String(), 0, 64)
-		if err != nil {
-			return "", err
-		}
-		InvokeTx.MaxFee = new(felt.Felt).SetUint64(newFee + newFee/5) // fee + 20% to be sure
-		// Signing the transaction again
-		err = masterAccnt.SignInvokeTransaction(context.Background(), &InvokeTx.InvokeTxnV1)
-		if err != nil {
-			return "", err
-		}
-	}
+	// // Estimate the transaction fee
+	// feeRes, err := masterAccnt.EstimateFee(context.Background(), []rpc.BroadcastTxn{InvokeTx}, []rpc.SimulationFlag{}, rpc.WithBlockTag("latest"))
+	// if err != nil {
+	// 	return "", PanicRPC(err)
+	// }
+	// estimatedFee := feeRes[0].OverallFee
+	// // If the estimated fee is higher than the current fee, let's override it and sign again
+	// if estimatedFee.Cmp(InvokeTx.MaxFee) == 1 {
+	// 	newFee, err := strconv.ParseUint(estimatedFee.String(), 0, 64)
+	// 	if err != nil {
+	// 		return "", err
+	// 	}
+	// 	InvokeTx.MaxFee = new(felt.Felt).SetUint64(newFee + newFee/5) // fee + 20% to be sure
+	// 	// Signing the transaction again
+	// 	err = masterAccnt.SignInvokeTransaction(context.Background(), &InvokeTx.InvokeTxnV1)
+	// 	if err != nil {
+	// 		return "", err
+	// 	}
+	// }
 
 	// After the signing we finally call the AddInvokeTransaction in order to invoke the contract function
 	resp, err := masterAccnt.AddInvokeTransaction(context.Background(), InvokeTx)
@@ -363,7 +413,7 @@ func FundAccount(address string) (string, error) {
 		return "", PanicRPC(err)
 	}
 
-	_, err = waitForTransaction(resp.TransactionHash, 5)
+	_, err = waitForTransaction(resp.TransactionHash, 15)
 	if err != nil {
 		return "", err
 	}
